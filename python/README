@@ -1,0 +1,37 @@
+# README
+# Describes contents of the insight/project/code/ directory
+#
+# This directory contains all code for my insight project. The following directories and files are located here:
+#
+####################################################################################
+
+DIRECTORIES
+external         - Contains all functions/scripts that I received from external sources.
+
+#----------------------------------------------------------------------------------
+
+FILES
+initialize.py    - Reads yelp data in json format and puts into pandas dataframes for restaurants and reviews.
+		   Saves pandas dataframes of all information as pickles.
+		   Saves MySQL table from the info in the pandas dataframe.
+
+process_text.py  - Contains functions for text processing on the reviews. These include:
+		      tokenization
+		      segmentation
+		      stemming
+		      part-of-speech tagging
+
+sentiment.py	 - Calculates sentiment scores for sentences.
+		   Builds sentiment dictionary for my corpus.
+
+features.py      - Determines labels of sentences.
+
+main.py          - Main process called.
+		      Input: string of a search term
+		      Output: list of restaurants, sorted by sentiment score on the input string.
+		              Also, scores of other common features for those restaurants.
+
+sqlfuncs.py      - Functions that interact with the mysql database yelp_sentiment_db.
+		   Querying of database based on user input through web app.
+		   Initial creation of mysql database from pandas objects, called during initialize.py.
+		   Querying of database and insertion of columns for sentiment scoring.
