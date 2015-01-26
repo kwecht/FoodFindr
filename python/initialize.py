@@ -246,8 +246,43 @@ def sentence2mysql(sentences,append_string=''):
     con.commit()
 
 
+def build_lemma_vocab(append_string=''):
+    """
+    Builds entire vocabulary from a dataframe of reviews.
+    """
+    import process_text
+
+    # Restore data from file
+    reviews = pd.read_pickle('../data/pandas/review'+append_string+'.pkl')
+
+    vocab = {}
+    print len(reviews)
+    count = 0
+    for index,row in reviews.iterrows():
+        lemmas = process_text.text2lemmas(row.text)
+        for lemma in vocab:
+            try:
+                vocab[lemma] += 1
+            except:
+                vocab[lemma] = 1
+        count += 1
+        if count % 100==0: print count
+
+    # Save vocabulary to file
+    vocab = pd.Series(vocab)
+    vocab.to_pickle('../data/pandas/vocab'+append_string+'.pkl')
+
+    return True
 
 
+def count_lemmas(text,append_string=''):
+    """
+    Count number of occurances of each lemma in the text.
+
+    returns pandas Series where index=lemma, value=count
+    """
+
+    return None
 
 
 
@@ -282,6 +317,7 @@ def main():
     sentences = process_text.add_training_label(sentences,review_data)
     sentences.to_pickle('../data/pandas/sentences_mexican.pkl')
     result = sentence2mysql(sentences,review_data,append_string='_mexican')
+
 
 if __name__=='__main__':
     main()

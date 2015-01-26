@@ -141,7 +141,7 @@ def integrate_sparse(sparse,over='row'):
 ################################################################################
 
 
-def get_bag(sentences):
+def get_bag(sentences,rawtext=False):
     """
     Returns pandas Series where the indices are lemmas and values are the 
     number of occurances of each distinct lemma in the text
@@ -151,14 +151,21 @@ def get_bag(sentences):
 
     sentences - pandas dataframe of sentences as returned by 
                 process_text.reviews_to_sentences
+    rawtext   - accepts a string of text instead of a dataframe of sentences
     """
 
-    # Tag each word with part of speech
+    # Tag each word with part of speechy
     word_pos = []
-    for sent in sentences.index:
-        thissent = sentences.iloc[0]
-        result = nltk.pos_tag(nltk.word_tokenize(sentences.loc[sent].text))
-        word_pos.extend(result)
+    if rawtext==True:
+        sentences = nltk.sent_tokenize(sentences)
+        for sentence in sentences:
+            result = nltk.pos_tag(nltk.word_tokenize(sentence))
+            word_pos.extend(result)
+    else:
+        for sent in sentences.index:
+            thissent = sentences.iloc[0]
+            result = nltk.pos_tag(nltk.word_tokenize(sentences.loc[sent].text))
+            word_pos.extend(result)
 
     # Count occurances of nouns, verbs, and adjectives
     # Filter for not punctuation

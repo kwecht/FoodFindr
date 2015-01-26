@@ -1,0 +1,10 @@
+DIRECTORIES
+Presentations - weekly presentations of progress on the project
+app 	      - code for running the web-based application
+notebooks     - ipython notebooks used for prototyping and data exploration/visualization
+python 	      - main code directory
+resources     - external educational resources
+sql 	      - sql queries of database used for this project
+
+FILES
+run.py        - runs web-based application on local server
