@@ -25,6 +25,7 @@ __author__      = "Kevin Wecht"
 ########################################################################
 
 import pandas as pd
+import numpy as np
 import pdb
 
 ########################################################################
@@ -221,3 +222,73 @@ def interrogate_vocab(wordmatch, lemmaCount, keeplemmas,
 
 
     return True
+
+
+
+def build_training_row():
+    return None
+
+
+def build_training_input(lemma_list,type_string='review',append_string=''):
+    """
+    Builds matrix for training classification algorithm on 
+    Yelp review/sentence data. 
+
+    return (X,y)
+    X = [nrow x ncol]
+        nrow: number of training data (reviews/sentences)
+        ncol: number of words to use as features (len(lemma_list))
+        Values = word frequencies or presence in reviews/sentences
+
+    y = [nrow]   values 1-5 of each review, corresponding to each column of X
+    """
+
+    import collections
+
+    # Restore dataframe to use for training
+    dataframe = pd.read_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
+
+    
+    X=[]
+    y=[]
+    print "processing ", len(dataframe), " documents"
+    count = 0
+    for item in dataframe.index:
+        if count % 10000==0: print count
+        count += 1
+        thiscount = collections.Counter(dataframe.loc[item,'lemmas'])
+        thisseries = pd.Series(thiscount,index=lemma_list)
+        if len(thisseries)==0:
+            continue
+
+        # Calculate features from count of lemmas in this review/sentence
+        X.append(thisseries.values)   # count of lemmas in each revew/sentence
+        y.append(dataframe.loc[item,'stars'])
+
+    # Return pandas dataframes with information
+    Xdf = pd.DataFrame(X,index=dataframe.index,columns=lemma_list).fillna(0)
+    #for col in Xdf:       # uncomment if using indicator instead of count
+    #    Xdf.loc[Xdf[col]>0,col] = 1
+    Xdf = Xdf.loc[Xdf.sum(1)!=0,:]
+    ydf = pd.Series(y,index=dataframe.index)
+    ydf = ydf[ydf.index.isin(Xdf.index)]
+
+    return (Xdf, ydf)
+
+
+
+def train_model(model,lemma_list,type_string='review',append_string=''):
+    """
+    Train a model with info from the given lemma_list.
+
+    returns fitted model object
+    """
+
+    # Build pandas dataframe and series to hold information
+    X, y = build_training_input(lemma_list,type_string='review',append_string='_mexican')
+
+
+def test_model(model,lemma_list,type_string='review',append_string=''):
+    """
+    Test a model
+    """
