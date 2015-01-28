@@ -4,5 +4,6 @@
 *.txt
 *.rtf
 *.json
+*.csv
 data/
 python/img/

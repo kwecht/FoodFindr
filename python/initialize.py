@@ -285,6 +285,45 @@ def count_lemmas(text,append_string=''):
     return None
 
 
+def add_lemmas2pandas(type_string='', append_string=''):
+    """
+    Adds lemmatized text as an extra column in the reviews and/or sentences
+    databases.
+
+    type_string = {'review'|'sentences'}  determines whether to lemmatize
+                  text in pandas dataframe of reviews or sentences
+    """
+    import process_text
+
+    # Error handling
+    if type_string not in ['review','sentences']:
+        print "Error in add_lemmas2pandas:"
+        print "    type_string must be either 'review' or 'sentences'"
+        print "    please try again"
+        return None
+
+    # Lemmatize each row in the dataframe
+    dataframe = pd.read_pickle('../data/pandas/'+type_string+append_string+'.pkl')
+    lemmatized_text = []
+    count = 0
+    for item in dataframe.index:
+        #if count<63400: 
+        #    count += 1
+        #    continue
+        if count%1000==0: print count
+        thisitem = dataframe.loc[item]
+        lemmatized_text.append( process_text.text2lemmas(thisitem.text) )
+        count += 1
+
+    # Add lemmatized text back as a column in the dataframe
+    lemmatized_text = pd.Series(lemmatized_text,index=dataframe.index)
+    dataframe['lemmas'] = lemmatized_text
+
+    # Save dataframe to file
+    dataframe.to_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
+
+    return True
+
 
 def main():
     """Main function to initialize databases to analysize Yelp data."""

@@ -178,6 +178,8 @@ def addNgrams(lemmas,pos,N_gram,N_return=20,min_occur=3):
     min_occur - Filter out N-grams that occur less than min_occur times
     """
 
+    import pdb
+
     from nltk.collocations import BigramCollocationFinder, TrigramCollocationFinder
     from nltk.metrics import BigramAssocMeasures, TrigramAssocMeasures
 
@@ -191,7 +193,10 @@ def addNgrams(lemmas,pos,N_gram,N_return=20,min_occur=3):
 
     # Find N-grams
     finder.apply_freq_filter(min_occur)
-    ngrams = finder.nbest(test,N_return)
+    try:
+        ngrams = finder.nbest(test,N_return)
+    except:
+        ngrams = []
 
     # Add N grams to list of lemmas, replacing the adjacent terms that form the N grams
     for gram in ngrams:
@@ -303,68 +308,68 @@ def text2lemmas(string):
 
 
 
-def word_count(lemmas,append_string=''):
-    """
-    Count frequency of words in a list of lemmas.
-    """
-    import sentiment
-
-    sentences = pd.read_pickle('../data/pandas/sentences'+append_string+'.pkl')
-
-    bags = []
-    for nstar in sentences.stars.unique():
-        print "processing stars = {}".format(nstar)
-        thisdata = sentences[sentences['stars']==nstar]
-        thisbag = sentiment.get_bag(thisdata)  # only keeps nouns, adjectives, verbs
-        thisbag.name = str(int(nstar))
-        bags.append( thisbag )
-    
-    dataframe = pd.concat(bags,axis=1)
-    dataframe.to_pickle('../data/pandas/word_count'+append_string+'.pkl')
-
-    return True
-
-
-def trim_word_count(words,how='',freq_threshold=0.0002,N=None):
-    """
-    Trims the bag of words prodoced by word_count().
-    Used to select meaningful words that will be passed to 
-    a classifier to determine how many stars a given 
-    piece of text should have (entire review or single sentence).
-
-    words  - a pandas dataframe produced by word_count()
-    how    - string indicating the way in which to trim the words
-             {'unique'|'frequency'}
-             unique    - keep the N most unique words in each category
-                         where unique is defined as the ratio of
-                         frequency-in-category : frequency-out-of-category
-             frequency - keep all words that occur in the corpus with
-                         frequency >= freq_threshold.
-    N      - if how='unique': keep N most unique words in each category
-    freq_threshold - keep all words that occur in the corpus
-                     with frequency >= freq_threshold
-    """
-
-    # Only keep words that occur above a threshold frequency
-    total = words.sum(1)
-    overallfreq = total / total.sum()
-    words = words[overallfreq>freq_threshold]
-
-    # Only keep words that are unique to a given category
-    if how=='unique':
-        
-        # Find all words that are unique to each category
-        keepwords = []
-        for col in words:
-            relfreq = words[col].div(words.sum(1),axis='index')
-            relfreq.order(ascending=False,inplace=True)
-            keepwords.extend(relfreq.index[0:N])
-
-        # Trim words dataframe for those words
-        if len(set(keepwords))==len(keepwords):
-            print "Warning in process_text.trim_word_count"
-            print "   Some words are important for more than one category."
-        words = words.loc[keepwords]
-        words.drop_duplicates(inplace=True)
-
-    return words
+#def word_count(lemmas,append_string=''):
+#    """
+#    Count frequency of words in a list of lemmas.
+#    """
+#    import sentiment
+#
+#    sentences = pd.read_pickle('../data/pandas/sentences'+append_string+'.pkl')
+#
+#    bags = []
+#    for nstar in sentences.stars.unique():
+#        print "processing stars = {}".format(nstar)
+#        thisdata = sentences[sentences['stars']==nstar]
+#        thisbag = sentiment.get_bag(thisdata)  # only keeps nouns, adjectives, verbs
+#        thisbag.name = str(int(nstar))
+#        bags.append( thisbag )
+#    
+#    dataframe = pd.concat(bags,axis=1)
+#    dataframe.to_pickle('../data/pandas/word_count'+append_string+'.pkl')
+#
+#    return True
+#
+#
+#def trim_word_count(words,how='',freq_threshold=0.0002,N=None):
+#    """
+#    Trims the bag of words prodoced by word_count().
+#    Used to select meaningful words that will be passed to 
+#    a classifier to determine how many stars a given 
+#    piece of text should have (entire review or single sentence).
+#
+#    words  - a pandas dataframe produced by word_count()
+#    how    - string indicating the way in which to trim the words
+#             {'unique'|'frequency'}
+#             unique    - keep the N most unique words in each category
+#                         where unique is defined as the ratio of
+#                         frequency-in-category : frequency-out-of-category
+#             frequency - keep all words that occur in the corpus with
+#                         frequency >= freq_threshold.
+#    N      - if how='unique': keep N most unique words in each category
+#    freq_threshold - keep all words that occur in the corpus
+#                     with frequency >= freq_threshold
+#    """
+#
+#    # Only keep words that occur above a threshold frequency
+#    total = words.sum(1)
+#    overallfreq = total / total.sum()
+#    words = words[overallfreq>freq_threshold]
+#
+#    # Only keep words that are unique to a given category
+#    if how=='unique':
+#        
+#        # Find all words that are unique to each category
+#        keepwords = []
+#        for col in words:
+#            relfreq = words[col].div(words.sum(1),axis='index')
+#            relfreq.order(ascending=False,inplace=True)
+#            keepwords.extend(relfreq.index[0:N])
+#
+#        # Trim words dataframe for those words
+#        if len(set(keepwords))==len(keepwords):
+#            print "Warning in process_text.trim_word_count"
+#            print "   Some words are important for more than one category."
+#        words = words.loc[keepwords]
+#        words.drop_duplicates(inplace=True)
+#
+#    return words
