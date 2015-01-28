@@ -154,7 +154,7 @@ def get_bag(sentences,rawtext=False):
     rawtext   - accepts a string of text instead of a dataframe of sentences
     """
 
-    # Tag each word with part of speechy
+    # Tag each word with part of speech
     word_pos = []
     if rawtext==True:
         sentences = nltk.sent_tokenize(sentences)
