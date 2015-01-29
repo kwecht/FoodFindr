@@ -289,13 +289,11 @@ def build_training_input(lemma_list,type_string='review',append_string='',Nuniqu
     #Xdf = Xdf.loc[Xdf.sum(1)!=0,:]
     #ydf = pd.Series(y,index=dataframe.index)
     #ydf = ydf[ydf.index.isin(Xdf.index)]
-    print type(Xsparse)
     if X!=[]:
         Xsparse = sp.sparse.vstack([Xsparse,sp.sparse.lil_matrix(X)],format='lil')
     #Xsparse = sp.sparse.lil_matrix(np.array(X))
     y = np.array(y)
 
-    print type(Xsparse)
 
     return (Xsparse, y)
 
