@@ -26,8 +26,11 @@ __author__      = "Kevin Wecht"
 
 import pandas as pd
 import numpy as np
-import scipy as sp
+import scipy.sparse as spr
 import pdb
+import random
+import collections
+from sklearn.naive_bayes import MultinomialNB
 
 ########################################################################
 
@@ -262,7 +265,8 @@ def build_training_input(dataframe,Nunique=200):
 
 
     X=[]
-    y_selector=[]
+    y=[]
+    dfindex = []
     print "processing ", len(dataframe), " documents"
     count = 0
     stackcount = 0
@@ -272,19 +276,22 @@ def build_training_input(dataframe,Nunique=200):
         if count % 4000==0: print count
         thiscount = collections.Counter(dataframe.loc[item,'lemmas'])
         thisseries = pd.Series(thiscount,index=lemma_list)
-        if len(thisseries)==0:
+        if thisseries.any()==False:
+            #print "I'm here, no matches!"
+            count += 1
             continue
 
         # Append this information to existing list/matrix
-        y_selector.append(dataframe.loc[item,'stars'])
+        y.append(dataframe.loc[item,'stars'])
         X.append(thisseries.fillna(0).values)
+        dfindex.append(item)
         #X.append(sp.sparse.lil_matrix(thisseries.values))
         count += 1
         if count % 10000==0:
             if stackcount==0:
-                Xsparse = sp.sparse.lil_matrix(X)
+                Xsparse = spr.lil_matrix(X)
             elif stackcount>0:
-                Xsparse = sp.sparse.vstack([Xsparse,sp.sparse.lil_matrix(X)],format='lil')
+                Xsparse = spr.vstack([Xsparse,spr.lil_matrix(X)],format='lil')
             X = []
             stackcount += 1
 
@@ -300,12 +307,13 @@ def build_training_input(dataframe,Nunique=200):
     #ydf = pd.Series(y,index=dataframe.index)
     #ydf = ydf[ydf.index.isin(Xdf.index)]
     if X!=[]:
-        Xsparse = sp.sparse.vstack([Xsparse,sp.sparse.lil_matrix(X)],format='lil')
+        Xsparse = spr.vstack([Xsparse,spr.lil_matrix(X)],format='lil')
     #Xsparse = sp.sparse.lil_matrix(np.array(X))
     y = np.array(y)
+    dfindex = np.array(dfindex)
 
 
-    return (Xsparse, y)
+    return (Xsparse, y, dfindex)
 
 
 
@@ -383,10 +391,12 @@ def cross_validate(model,k,X,y,mean_accuracy=False):
 
 
 
-def classify_sentences(dataframe,model):
+def classify_sentences(results,append_string='_mexican'):
     """
     Score sentences in a dataframe using a classification model
-    developed in another function.
+    developed in model_reviews.
+
+    results - a model.fit() object as returned by model_reviews
     """
 
     # For each sentence
@@ -398,8 +408,54 @@ def classify_sentences(dataframe,model):
     #    4. dataframe['FF_class'] = classes
 
     # Build training input from dataframe
-    X,y = build_training_input(dataframe,Nunique=200)
+    sentences = pd.read_pickle('../data/pandas/sentences_lemmas' + append_string + '.pkl')
+    Xsent, ysent, indexsent = build_training_input(sentences)
+    sentence_prediction = results.predict(Xsent)
 
-    # model.predict(X)
+    # Place sentence classification predictions back into the sentenes dataframe
+    classes = pd.Series(sentence_prediction,index=indexsent)
+    sentences['FF_score'] = classes
+    sentences.to_pickle('../data/pandas/sentences_lemmas_scored' + append_string + '.pkl')
 
-    return classes
+    return sentences
+
+
+def split_train_test(X,y,ratio=0.5):
+    """
+    Returns input (X) and labels (y) split into test and training data.
+    return xtrain, ytrain, xtest, ytest
+
+    ratio - ratio of train to test data to keep
+    """
+
+    indices = np.arange(len(y))
+    random.seed(12345)
+    random.shuffle = indices
+    div = np.round(ratio*len(y)).astype(int)
+    Xtrain = X[:div,:]
+    ytrain = y[:div]
+    Xtest = X[div:,:]
+    ytest = y[div:]
+
+    return Xtrain, ytrain, Xtest, ytest
+
+
+def make_model(append_string='_mexican'):
+    """
+    Builds naive bayes classifier of reviews.
+    Returns fitted model (model.fit()) object.
+    """
+
+    # Read review data from file
+    review = pd.read_pickle('../data/pandas/review_lemmas' + append_string + '.pkl')
+
+    # Get training data to construct the model
+    X, y, indexrev = build_training_input(review,Nunique=400)
+    Xtrain, ytrain, Xtest, ytest = split_train_test(X,y,ratio=0.67)
+
+    # Build model of review class (1-5 stars)
+    model = MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    results = model.fit(Xtrain,ytrain)
+
+    return results
+

@@ -85,16 +85,47 @@ def pandas2sql(dataframe,tablename):
     """
 
     # Restore pandas dataframe from file
-    dataframe = pd.read_pickle('../data/pandas/sentences_lemmas_mexican.pkl')
+    #dataframe = pd.read_pickle('../data/pandas/sentences_lemmas_mexican.pkl')
 
     # score sentences in the dataframe.
-    classes = classification.classify_sentences(model,dataframe)
-    dataframe['FF_class'] = classes
+    #classes = classification.classify_sentences(model,dataframe)
+    #dataframe['FF_class'] = classes
 
     # Write sentences dataframe to file
     con = mdb.connect('localhost', 'root', '', 'yelp_sentiment_db', 
                       use_unicode=True, charset="utf8")
-    dataframe.to_sql('scored_sentences',con,index=False,flavor='mysql')
+    cur = con.cursor()
+    try:
+        cmd = "DROP TABLE {}".format(tablename)
+        cur.execute(cmd)
+    except:
+        print 'No TABLE {} in the database'.format(tablename)
+
+
+    cmd = "CREATE TABLE {0} (review_id text, sentence_id text,content text, lemmas text, stars float, FF_score float)".format(tablename)
+    cur.execute(cmd)
+
+    # Add one row at a time to the sentences table
+    count = 0
+    for index in dataframe.index:
+        if count % 10000==0: print count
+        count += 1
+
+        a = dataframe.loc[index,:]
+        if np.isnan(a['FF_score']):
+            ffscore = "NULL"
+        else:
+            ffscore = a['FF_score']
+
+        # Insert values into the dataframe
+        cmd = u'INSERT INTO {0} VALUES ("{1}","{2}","{3}","{4}",{5},{6})'.format(tablename,a['review_id'].replace('"', ''),a['sentence_id'].replace('"',''),a['text'].replace('"','').replace('\n',' ').replace('\\','/'),' '.join(a['lemmas']),a['stars'],ffscore)
+        try:
+            cur.execute(cmd)
+        except:
+            print "Skipping index value {}".format(index)
+
+    # Commit changes to the database
+    con.commit()
     con.close()
 
     return True
