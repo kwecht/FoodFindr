@@ -26,6 +26,7 @@ __author__      = "Kevin Wecht"
 
 import pandas as pd
 import numpy as np
+import scipy as sp
 import pdb
 
 ########################################################################
@@ -69,7 +70,7 @@ def lemma_count(type_string='',by='stars',append_string='',save=False):
     return newdata
 
 
-def build_lemma_list(lemmaCount,interrogate=False):
+def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
     """
     Write lemmas that will be used for modeling to file.
     Trim lemmas by a number of methods:
@@ -82,6 +83,8 @@ def build_lemma_list(lemmaCount,interrogate=False):
     interrogate - if True, prints diagnostics about the vocabulary
                   selection to screen. It uses extra memory and takes
                   time, so do not use after deployment.
+
+    Nunique - number of unique lemmas to keep for each category
     """
 
     if interrogate==True: original_lemmaCount = lemmaCount
@@ -93,14 +96,13 @@ def build_lemma_list(lemmaCount,interrogate=False):
 
     # 2) Trim by ratio of term frequency in group vs. out of group
     # Find all words that are unique to each group
-    N = 200    # Keep N most unique words in each group
     wordmatch = {}
     keeplemmas = []
     for ind in lemmaCount.index:
         relfreq = lemmaCount.loc[ind,:].div(lemmaCount.sum(0),axis='index')
         relfreq.order(ascending=False,inplace=True)
-        keeplemmas.extend(relfreq.index[0:N])
-        wordmatch[str(ind)] = relfreq.index[0:N]
+        keeplemmas.extend(relfreq.index[0:Nunique])
+        wordmatch[str(ind)] = relfreq.index[0:Nunique]
 
     if interrogate==True: full_lemmalist = keeplemmas
 
@@ -131,7 +133,7 @@ def build_lemma_list(lemmaCount,interrogate=False):
     #with open(the_filename, 'r') as f:
     #    my_list = [line.decode('unicode-escape').rstrip(u'\n') for line in f]
 
-    return lemmaCount
+    return True
 
 
 
@@ -229,7 +231,7 @@ def build_training_row():
     return None
 
 
-def build_training_input(lemma_list,type_string='review',append_string=''):
+def build_training_input(lemma_list,type_string='review',append_string='',Nunique=200):
     """
     Builds matrix for training classification algorithm on 
     Yelp review/sentence data. 
@@ -253,27 +255,49 @@ def build_training_input(lemma_list,type_string='review',append_string=''):
     y=[]
     print "processing ", len(dataframe), " documents"
     count = 0
+    stackcount = 0
     for item in dataframe.index:
-        if count % 10000==0: print count
-        count += 1
+
+        # Get ordered count of all lemmas in the review/sentence
+        if count % 4000==0: print count
         thiscount = collections.Counter(dataframe.loc[item,'lemmas'])
         thisseries = pd.Series(thiscount,index=lemma_list)
         if len(thisseries)==0:
             continue
 
-        # Calculate features from count of lemmas in this review/sentence
-        X.append(thisseries.values)   # count of lemmas in each revew/sentence
+        # Append this information to existing list/matrix
         y.append(dataframe.loc[item,'stars'])
+        X.append(thisseries.fillna(0).values)
+        #X.append(sp.sparse.lil_matrix(thisseries.values))
+        count += 1
+        if count % 10000==0:
+            if stackcount==0:
+                Xsparse = sp.sparse.lil_matrix(X)
+            elif stackcount>0:
+                Xsparse = sp.sparse.vstack([Xsparse,sp.sparse.lil_matrix(X)],format='lil')
+            X = []
+            stackcount += 1
+
+
+            #X.append(thisseries.values)   # count of lemmas in each revew/sentence
+            #y.append(dataframe.loc[item,'stars'])
 
     # Return pandas dataframes with information
-    Xdf = pd.DataFrame(X,index=dataframe.index,columns=lemma_list).fillna(0)
+    #Xdf = pd.DataFrame(X,index=dataframe.index,columns=lemma_list).fillna(0)
     #for col in Xdf:       # uncomment if using indicator instead of count
     #    Xdf.loc[Xdf[col]>0,col] = 1
-    Xdf = Xdf.loc[Xdf.sum(1)!=0,:]
-    ydf = pd.Series(y,index=dataframe.index)
-    ydf = ydf[ydf.index.isin(Xdf.index)]
+    #Xdf = Xdf.loc[Xdf.sum(1)!=0,:]
+    #ydf = pd.Series(y,index=dataframe.index)
+    #ydf = ydf[ydf.index.isin(Xdf.index)]
+    print type(Xsparse)
+    if X!=[]:
+        Xsparse = sp.sparse.vstack([Xsparse,sp.sparse.lil_matrix(X)],format='lil')
+    #Xsparse = sp.sparse.lil_matrix(np.array(X))
+    y = np.array(y)
 
-    return (Xdf, ydf)
+    print type(Xsparse)
+
+    return (Xsparse, y)
 
 
 
@@ -292,3 +316,76 @@ def test_model(model,lemma_list,type_string='review',append_string=''):
     """
     Test a model
     """
+
+
+
+
+def calc_frac2d(result,Xtest,ytest):
+    """
+    Make a 5x5 matrix of model results on test data.
+    x-axis = predicted category
+    y-axis = true category
+
+    Returns 2d array of probabilities
+    """
+
+    frac2d = np.zeros((5,5))
+    ypred = result.predict(Xtest)
+    for true_stars in range(1,6):
+        # Calculate fraction of results in each category
+        thesevals = ypred[ytest==true_stars]
+        thesevals = np.bincount(thesevals.astype(np.int32))
+        frac2d[:,true_stars-1] = thesevals[1:]/float(sum(thesevals[1:]))
+    
+    return frac2d
+
+
+
+
+def cross_validate(model,k,X,y,mean_accuracy=False):
+    """
+    Return stacked (3D) array of classification performance
+    for each loop in k-fold cross-validation.
+    
+    mean_accuracy - if True, return mean accuracy of each loop
+                    in k-fold cross-validation, where accuracy
+                    is fraction of labels correctly predicted
+    
+    model    model object of scikit-learn
+    k        value of k in k-fold cross-validation
+    X        matrix of inputs
+    y        array of output (targets)
+    """
+    indices = np.arange(len(y))
+    random.seed(12345)
+    random.shuffle(indices)
+    N = len(y)/k
+
+    accuracy = []
+    for index in range(k):
+        
+        # Divide data into training/test sets
+        print "k = ", index
+        begin = index*N
+        end = (index+1)*N
+        these_indices = indices[begin:end]
+        Xtrain = X[~these_indices,:]
+        ytrain = y[~these_indices]
+        Xtest = X[these_indices,:]
+        ytest = y[these_indices]
+
+        # Fit model to training data and record results
+        results = model.fit(Xtrain,ytrain)
+        if return_accuracy==True:
+            accuracy.append(results.score(Xtest,ytest))
+        else:
+            if index==0:
+                frac2d = calc_frac2d(results,Xtest,ytest)
+            else:
+                temp = calc_frac2d(results,Xtest,ytest)
+                frac2d = np.dstack((frac2d,temp))
+
+    if return_accuracy==True:
+        return accuracy
+    else:
+        return frac2d
