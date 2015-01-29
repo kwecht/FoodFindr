@@ -76,3 +76,25 @@ def query_term(string):
     con.close()
 
     return output
+
+
+
+def pandas2sql(dataframe,tablename):
+    """
+    Save pandas dataframe to mysql database as a table.
+    """
+
+    # Restore pandas dataframe from file
+    dataframe = pd.read_pickle('../data/pandas/sentences_lemmas_mexican.pkl')
+
+    # score sentences in the dataframe.
+    classes = classification.classify_sentences(model,dataframe)
+    dataframe['FF_class'] = classes
+
+    # Write sentences dataframe to file
+    con = mdb.connect('localhost', 'root', '', 'yelp_sentiment_db', 
+                      use_unicode=True, charset="utf8")
+    dataframe.to_sql('scored_sentences',con,index=False,flavor='mysql')
+    con.close()
+
+    return True

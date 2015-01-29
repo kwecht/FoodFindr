@@ -226,3 +226,8 @@ def make_bags(sentences):
 
 
     return dataframe
+
+
+
+
+

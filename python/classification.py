@@ -231,10 +231,15 @@ def build_training_row():
     return None
 
 
-def build_training_input(lemma_list,type_string='review',append_string='',Nunique=200):
+def build_training_input(dataframe,Nunique=200):
     """
     Builds matrix for training classification algorithm on 
     Yelp review/sentence data. 
+
+    sentence   - if True, build matrix for individual sentences
+                 main difference is that the function also returns a list of 
+                 pandas index values from the dataframe used. This is
+                 returned to help match the model predictions back to the dataframe.
 
     return (X,y)
     X = [nrow x ncol]
@@ -247,12 +252,17 @@ def build_training_input(lemma_list,type_string='review',append_string='',Nuniqu
 
     import collections
 
-    # Restore dataframe to use for training
-    dataframe = pd.read_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
+    # Read lemmas to include as features in classifcation
+    with open('../data/pandas/lemma_list.txt', 'r') as f:
+        lemma_list = [line.decode('unicode-escape').rstrip(u'\n') for line in f]
 
-    
+    # Restore dataframe to use for training
+    #    I should really pass this as an argument to the function
+    #dataframe = pd.read_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
+
+
     X=[]
-    y=[]
+    y_selector=[]
     print "processing ", len(dataframe), " documents"
     count = 0
     stackcount = 0
@@ -266,7 +276,7 @@ def build_training_input(lemma_list,type_string='review',append_string='',Nuniqu
             continue
 
         # Append this information to existing list/matrix
-        y.append(dataframe.loc[item,'stars'])
+        y_selector.append(dataframe.loc[item,'stars'])
         X.append(thisseries.fillna(0).values)
         #X.append(sp.sparse.lil_matrix(thisseries.values))
         count += 1
@@ -296,24 +306,6 @@ def build_training_input(lemma_list,type_string='review',append_string='',Nuniqu
 
 
     return (Xsparse, y)
-
-
-
-def train_model(model,lemma_list,type_string='review',append_string=''):
-    """
-    Train a model with info from the given lemma_list.
-
-    returns fitted model object
-    """
-
-    # Build pandas dataframe and series to hold information
-    X, y = build_training_input(lemma_list,type_string='review',append_string='_mexican')
-
-
-def test_model(model,lemma_list,type_string='review',append_string=''):
-    """
-    Test a model
-    """
 
 
 
@@ -387,3 +379,27 @@ def cross_validate(model,k,X,y,mean_accuracy=False):
         return accuracy
     else:
         return frac2d
+
+
+
+
+def classify_sentences(dataframe,model):
+    """
+    Score sentences in a dataframe using a classification model
+    developed in another function.
+    """
+
+    # For each sentence
+    #    1. text2lemmas (may already be done; re-do to ensure consistency)
+    #    2. build_training_input, passing the sentence dataframe
+    #           keep track of index value for each row selected so 
+    #           that we can load this back into the dataframe.
+    #    3. classes = model.predict(Xtest)  # Xtest is matrix built in build_training_input
+    #    4. dataframe['FF_class'] = classes
+
+    # Build training input from dataframe
+    X,y = build_training_input(dataframe,Nunique=200)
+
+    # model.predict(X)
+
+    return classes
