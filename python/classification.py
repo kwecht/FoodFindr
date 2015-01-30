@@ -445,6 +445,7 @@ def make_model(append_string='_mexican'):
     Builds naive bayes classifier of reviews.
     Returns fitted model (model.fit()) object.
     """
+    import cPickle as pickle
 
     # Read review data from file
     review = pd.read_pickle('../data/pandas/review_lemmas' + append_string + '.pkl')
@@ -456,6 +457,7 @@ def make_model(append_string='_mexican'):
     # Build model of review class (1-5 stars)
     model = MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     results = model.fit(Xtrain,ytrain)
+    pickle.dump(results,open( "current_model_results.pkl", "wb" ))
 
     return results
 

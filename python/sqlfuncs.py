@@ -102,11 +102,12 @@ def pandas2sql(dataframe,tablename):
         print 'No TABLE {} in the database'.format(tablename)
 
 
-    cmd = "CREATE TABLE {0} (review_id text, sentence_id text,content text, lemmas text, stars float, FF_score float)".format(tablename)
+    cmd = "CREATE TABLE {0} (review_id text, sentence_id text,content text, lemmas text, stars float, FF_score float, FULLTEXT idx (content)) ENGINE=InnoDB".format(tablename)
     cur.execute(cmd)
 
     # Add one row at a time to the sentences table
     count = 0
+    print "processing ", len(dataframe),"documents"
     for index in dataframe.index:
         if count % 10000==0: print count
         count += 1

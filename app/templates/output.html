@@ -79,13 +79,13 @@
     <div class="container">
       <div class="starter-template">
         <h3>Results:</h3>
-        <p class="lead">Below are restaurants with the most mentions of {{input_term}} in Yelp reviews.<br></p>
+        <p class="lead">Below are restaurants with the best {{input_term}} in Yelp reviews.<br></p>
       </div>
 
       <table class="table table-hover">
-      <tr><th>Name</th><th>No. of Mentions</th><th>Overall Star Rating</th></tr>
+      <tr><th>Restaurant Name</th><th>Yelp Rating</th><th>Food Finder {{input_term}} Score</th><th>Reference Score</th><th># Sentences Evaluated</th></tr>
       {% for rest in restaurants %}
-      <tr><td>{{ rest['name'] }}</td><td>{{ rest['nreviews']}}</td><td> {{ rest['stars'] }}</td></tr>
+      <tr><td>{{ rest['name'] }}</td><td>{{ rest['YelpRating']}}</td><td> {{ rest['FoodFinder'] }}</td><td> {{ rest['Baseline'] }}</td><td>{{ rest['Nsentences']}}</td></tr>
       {% endfor %}
       </table>
 

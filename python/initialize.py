@@ -121,7 +121,7 @@ def py2mysql(restaurant_data,review_data,append_string=''):
     except:
         print 'No TABLE {} in the database'.format(table_name)
 
-    cmd = "CREATE TABLE {} (business_id text, business_name text,city text, latitude float, longitude float, business_stars float, review_count int, status text, takeout float, noise float, reservations float, wifi float,parking float, creditcard float, goodforgroup float)".format(table_name)
+    cmd = "CREATE TABLE {} (ID int NOT NULL AUTO_INCREMENT PRIMARY KEY, business_id VARCHAR(22), business_name text,city text, latitude float, longitude float, business_stars float, review_count int, status text, takeout float, noise float, reservations float, wifi float,parking float, creditcard float, goodforgroup float)".format(table_name)
     cur.execute(cmd)
 
     # Add one row at a time to the Restaurants table
@@ -194,7 +194,21 @@ def py2mysql(restaurant_data,review_data,append_string=''):
     except:
         print 'No TABLE {} in the database'.format(table_name)
 
-    cmd = "CREATE TABLE {} (business_id text, review_id text, user_id text, stars float, ymd DATE, content text)".format(table_name)
+
+    # Replace business ID with primary key from restaurant table above
+    cmd = "SELECT ID, business_id FROM Restaurant_mexican"
+    cur.execute(cmd)
+    output = cur.fetchall()  # tuple of rows in reviews
+    primary_key = [out[0] for out in output]
+    busid = [out[1] for out in output]
+    primary_key = pd.Series(primary_key,index=busid)
+    review_data['business_primary_key'] = -1
+    for bid, key in output:
+        review_data[review_data['business_id']==bid]['business_primary_key'] = key
+
+
+
+    cmd = "CREATE TABLE {} (ID int NOT NULL AUTO_INCREMENT PRIMARY KEY, business_primary_key int, business_id VARCHAR(22), review_id text, user_id text, stars float, ymd DATE, content text)".format(table_name)
     cur.execute(cmd)
 
     # Add one row at a time to the Restaurants table
@@ -203,7 +217,7 @@ def py2mysql(restaurant_data,review_data,append_string=''):
         a = review_data.loc[index]
     
         # Insert values into the dataframe
-        cmd = u'INSERT INTO {6} VALUES ("{0}","{1}","{2}",{3},"{4}","{5}")'.format(a['business_id'].replace('"', ''),a['review_id'].replace('"',''),a['user_id'].replace('"',''),a['stars'],a['date'],a['text'].replace('"','').replace('\n',' ').replace('\\','/'),table_name)
+        cmd = u'INSERT INTO {7} VALUES ({0},"{1}","{2}","{3}",{4},"{5}","{6}")'.format(a['business_primary_key'],a['business_id'].replace('"', ''),a['review_id'].replace('"',''),a['user_id'].replace('"',''),a['stars'],a['date'],a['text'].replace('"','').replace('\n',' ').replace('\\','/'),table_name)
         try:
             cur.execute(cmd)
         except:
@@ -323,6 +337,19 @@ def add_lemmas2pandas(type_string='', append_string=''):
     dataframe.to_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
 
     return True
+
+
+def addbusiness2sentences():
+    """
+    Add business ID values to each row of the sentences dataframes.
+    """
+
+    # File names of sentence dataframes to which I will add business IDs
+    files = ['','','','']
+
+    return True
+    
+
 
 
 def main():

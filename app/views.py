@@ -48,14 +48,15 @@ def food_input():
 
 @app.route('/output')
 def food_output():
-  #pull 'ID' from input field and store it
+  #pull 'ID' from input field and store it 
+  print "i am here!"
   input_term = request.args.get('ID')
   query_results = util.query_term(input_term)
+  print query_results
 
   restaurants = []
   for result in query_results:
-    restaurants.append(dict(name=result[0], nreviews=result[1], stars=result[2]))
-  #pop_input = cities[0]['population']
-  #the_result = ModelIt(city, pop_input)
+    restaurants.append(dict(name=result[0], YelpRating=result[1], FoodFinder=result[2], 
+                            Baseline=result[3], Nsentences=result[4]))
   the_result = 5.00
-  return render_template("output.html", restaurants = restaurants, the_result = the_result, input_term=input_term)
+  return render_template("output.html", restaurants = restaurants, the_result = the_result, input_term=input_term )

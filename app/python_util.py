@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-sentiment.py
+python_util.py
 ########################################################################
 #
 #        Kevin Wecht                22 January 2015
@@ -11,15 +11,9 @@ sentiment.py
 #
 ########################################################################
 #
-#    sqlfuncs.py
-#        - Handles all querying and writing to mysql database
-#        - Querying of database based on user input through web app.
-#	 - Initial creation of mysql database from pandas objects, 
-#              called during initialize.py.
-#	 - Querying of database and insertion of columns for sentiment scoring.
-#
-#    EXAMPLE
-#        
+#    python_util.py
+#        - Contains functions for passing and manipulating information
+#          passed through the web front-end.
 #
 ########################################################################
 """
@@ -51,17 +45,14 @@ def query_term(string):
     # Perform query.
     # Returns business name and number of reviews for each business
     cmd = """
-          SELECT business.name, review.nrev, business.stars
-          FROM 
-              (SELECT business_id, COUNT(review_id) AS nrev 
-              FROM review_mexican 
-              WHERE content LIKE '%{}%' 
-              GROUP BY business_id) AS review 
-            INNER JOIN
-              (SELECT business_id, business_name as name, business_stars as stars
-              FROM restaurant_mexican) AS business
-            ON review.business_id=business.business_id
-          ORDER BY review.nrev DESC
+          SELECT rest.business_name, rest.business_stars, AVG(sent.FF_score) as FF_score, 
+                 AVG(sent.stars) as Star_score, COUNT(sent.FF_score) as num_sent
+          FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored as sent
+          WHERE rest.business_id=rev.business_id AND
+                rev.review_id=sent.review_id AND
+                sent.content LIKE '%burrito%'
+          GROUP BY rest.business_id HAVING num_sent > 10
+          ORDER BY FF_score DESC
           LIMIT 5;
           """.format(string)
     print cmd
@@ -79,3 +70,71 @@ def query_term(string):
     con.close()
 
     return output
+
+
+
+def query_business(busID):
+    """
+    Queries text of reviews for a given business ID.
+
+    Returns popular terms and associated scores in a dictionary.
+
+    Always returns a single row.
+    """
+
+    # List of popular terms to query. Make this a function in the future.
+    popular_terms = [['salsa'],['taco'],['burrito'],['guacamole'],
+                     ['service'],['price']]
+
+
+    # Start engine to connect to mysql
+    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
+                      use_unicode=True, charset="utf8") #host, user, password, 
+    cur = con.cursor()
+
+    # Perform query for each popular term. Return a dictionary of 
+    #     terms : scores
+    scores = {}
+
+    for category in popular_terms:
+        query_term(category[0])
+        thisterm = category[0]
+        # Returns business name and number of reviews for each business
+        cmd = """
+        SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, AVG(sent.stars) as Star_score, COUNT(sent.FF_score)
+        FROM Restaurant_mexican as bus,
+            Review_mexican as rev,
+            sentences_scored as sent
+        WHERE bus.business_id=rev.business_id AND
+            rev.review_id=sent.review_id AND
+            sent.content LIKE '%burrito%'
+        GROUP BY bus.business_id
+        ORDER BY FF_score DESC;
+        """.format(busID,category[0])
+        cur.execute(cmd)
+    
+        output = cur.fetchall()
+        scores[category[0]] = output
+
+    cur.close()
+    con.close()
+
+    return scores
+
+
+
+
+
+# To get average score of restaurants that contain burrito (using fulltext indices)
+"""
+SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, AVG(sent.stars) as Star_score, COUNT(sent.FF_score)
+FROM Restaurant_mexican as bus,
+     Review_mexican as rev,
+     sentences_scored as sent
+WHERE bus.business_id=rev.business_id AND
+      rev.review_id=sent.review_id AND
+      sent.content LIKE '%burrito%'
+GROUP BY bus.business_id
+ORDER BY FF_score DESC;
+"""
+
