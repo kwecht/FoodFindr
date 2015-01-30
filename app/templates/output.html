@@ -83,20 +83,35 @@
       </div>
 
       <table class="table table-hover">
-      <tr><th>Restaurant Name</th><th>Yelp Rating</th><th>Food Finder {{input_term}} Score</th><th>Reference Score</th><th># Sentences Evaluated</th></tr>
+      <tr><th>Restaurant Name</th><th>Yelp Rating</th><th>Food Finder {{input_term}} Score</th><th># Sentences Evaluated</th></tr>
       {% for rest in restaurants %}
-      <tr><td>{{ rest['name'] }}</td><td>{{ rest['YelpRating']}}</td><td> {{ rest['FoodFinder'] }}</td><td> {{ rest['Baseline'] }}</td><td>{{ rest['Nsentences']}}</td></tr>
+      <tr><td>{{ rest['name'] }}</td><td>{{ rest['YelpRating']}}</td><td> {{ rest['FoodFinder'] }}</td><td>{{ rest['Nsentences']}}</td></tr>
       {% endfor %}
       </table>
 
 
      </div><!-- /.container -->
 
+
     <div class="container">
       <div class="starter-template">
-        <h3>Another Result:</h3>
-        <p class="lead">Now we've taken the input and called a function from your package.<br>The result is {{the_result}}</p>
+        <h3>Restaurant Information:</h3>
+        <p class="lead">Here, we display information about individual restaurants.</p>
       </div>
+
+      {% for restdeet in restaurant_details %}
+      <h4>Restaurant Name: {{restdeet[restdeet.keys()[0]][0]}}</h4>
+      <table class="table table-hover">
+	<tr><th>Category</th><th>Yelp Rating</th><th>FoodFindr Score</th><th>Number of Sentences</th></tr>
+        {% for key in restdeet.keys() %}
+
+        <tr><td>{{key}}</td><td>{{restdeet[key][1]}}</td><td> {{restdeet[key][2]}}</td><td>{{restdeet[key][3]}}</td></tr>
+
+        {% endfor %}
+      </table>
+      <br>
+      
+      {% endfor %}
 
 
       <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
@@ -104,7 +119,6 @@
 
 
      </div><!-- /.container -->
-
 
 
     <!-- Bootstrap core JavaScript

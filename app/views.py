@@ -48,15 +48,26 @@ def food_input():
 
 @app.route('/output')
 def food_output():
-  #pull 'ID' from input field and store it 
-  print "i am here!"
-  input_term = request.args.get('ID')
-  query_results = util.query_term(input_term)
-  print query_results
+  import numpy as np
 
+  # Pull ID from the input field and store it
+  input_term = request.args.get('ID')
+
+  # Query review data for sentence scores on the search term
+  query_results = util.query_term(input_term)
   restaurants = []
   for result in query_results:
-    restaurants.append(dict(name=result[0], YelpRating=result[1], FoodFinder=result[2], 
-                            Baseline=result[3], Nsentences=result[4]))
-  the_result = 5.00
-  return render_template("output.html", restaurants = restaurants, the_result = the_result, input_term=input_term )
+    ffscore = np.round(100*result[2])/100.
+    restaurants.append(dict(name=result[0], YelpRating=result[1], 
+                            FoodFinder=ffscore, Nsentences=result[3]))
+
+  # Query review data for sentences scores on various features of the top 5 restaurants
+  rest_ids = [r[4] for r in query_results]  # list of business ID for each restaurant
+  restaurant_details = []
+  for RID in rest_ids:
+    query_results = util.query_business(RID,input_term)
+    restaurant_details.append(query_results)
+
+
+  return render_template("output.html", restaurants = restaurants, 
+                         input_term=input_term, restaurant_details=restaurant_details)
