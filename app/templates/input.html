@@ -38,7 +38,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Project name</a>
+          <a class="navbar-brand" href="#">Food Findr</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -50,33 +50,38 @@
       </div>
     </nav>
 
-<br><br>
-    <div class="container theme-showcase" role="main" style="background-color: rgba(255,0,0,0.6)">
-<!-- Main jumbotron for a primary marketing message or call to action -->
-      <div class="ffjumbotron" style="font-size: 200%">
-        <p align="center" style="font-size: 600%">Food Findr</p>
-        <p align="center" style="font-size: 200%">Bringing you the best burrito</p>
-      </div>
-      <br><br>
 
-      <div class="container">
+    <!-- Main Food Findr banner and subtitle !-->
+    <div class="main-banner" align="center" style="margin-top: 70px">
+      <img src="static/images/Main_banner_small.png" title="Main Banner"/>
+      <img src="static/images/Main_subtitle.png" title="Main Subtitle"/>
+    </div>
 
-        <div class = "container">
+    <!-- Text field and search button !-->
+    
 
+<br><br><br>
+
+
+    <div class="input-and-button" role="main">
           <form  action="/output" method="GET">
             <div class="form-group" align="center">
-              <label for="ID" style="font-size: 200%">Find your food:</label>
-              <input type="text" id="ID" name='ID' placeholder="burrito" style="font-size: 200%; margin: 0px 5px">
-	      <button type="submit" class="btn btn-default btn-lg" style="margin: 20px 50px; font-size: 200%">Find this food!</button>
+              <label for="ID" style="font-size: 150%">Find your food:</label>
+              <input type="text" id="ID" name='ID' placeholder="" style="font-size: 150%; margin: 0px 5px">
+              <label for="LOC" style="font-size: 150%; padding-left: 2cm">Near:</label>
+              <input type="text" id="LOC" name='LOC' placeholder="Phoenix, AZ" style="font-size: 150%; margin: 0px 5px" disabled="disabled">
             </div>
-    
+
+	    <div align="center">
+	      <button type="submit" class="btn btn-default btn-lg" style="margin: 0px 10px; font-size: 200%">Find this food!</button>
+	    </div>
           </form>
-        </div>
-    
+
+	 
+
+	  
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
         <script src="static/js/bootstrap.min.js"></script>
-    
-      </div> <!-- /.container-->
 
     </div>
 <br><br>
