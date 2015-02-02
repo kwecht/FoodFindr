@@ -7,3 +7,5 @@
 *.csv
 data/
 python/img/
+images/
+*.png
