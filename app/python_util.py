@@ -92,7 +92,7 @@ def query_term(string):
           SELECT rest.business_name, rest.business_stars, 
                  AVG(sent.FF_score) as FF_score, 
                  STD(sent.FF_score) as FF_std, COUNT(sent.FF_score) as num_sent,
-                 rest.business_id
+                 rest.business_id, sent.content
           FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored as sent
           WHERE rest.business_id=rev.business_id AND
                 rev.review_id=sent.review_id AND
@@ -104,7 +104,7 @@ def query_term(string):
     output = cur.fetchall()
 
     # Calculate value on which to sort results
-    #pdb.set_trace()
+    # This is the score that I'll call the FoodFindr results
     outlist = []
     for row in output:
         outlist.append(list(row))
@@ -112,15 +112,16 @@ def query_term(string):
     outlist = [v for v in outlist if v[2]!=None]
 
     # Calculate mean info for returning to calling function
-    weighted_scores = [v[2]*v[4] for v in outlist]
-    weights = [v[2] for v in outlist]
-    mean_info = sum(weighted_scores) / sum(weights)
+    #weighted_scores = [v[2]*v[4] for v in outlist]
+    #weights = [v[2] for v in outlist]
+    #mean_info = sum(weighted_scores) / sum(weights)
     mean_info = []
     for ii in range(len(outlist)):
         mean_info.append(float(len(outlist)-ii)/len(outlist))
 
     outlist = outlist[0:5]
     mean_info = mean_info[0:5]
+
 
     cur.close()
     con.close()

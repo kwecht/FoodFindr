@@ -91,11 +91,11 @@
 	<div>
 	  <table alight="center">
 	    <tr>
-	      <th></th><th style="font-size: 125%">A top {{rest['quantile']}}% ranked {{input_term}}</th><th style="font-size: 125%">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; padding: 0px 25px 0px 25px">Yelp Score</th><th></th>
+	      <th></th><th style="font-size: 125%"><u>A top {{rest['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; padding: 0px 25px 0px 25px">Yelp Score</th><th></th>
 	    </tr>
 	    <tr>
 	      <td></td>
-	      <td><p style="font-size: 20px">"A useful sentence from a review here."</p></td>
+	      <td style="width: 500px"><p style="font-size: 20px">"{{rest['text']}}"</p></td>
 	      <td style="text-align: center"><img src="static/images/ffcircle_{{rest['decimal']}}.png" style="height: 15%"></td>
 	      <td><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="height: 25%; padding: 0px 25px 0px 25px"</td>
 	    </tr>

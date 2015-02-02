@@ -49,11 +49,11 @@ def food_output():
     # Determine which type of circle image to create
     mi_real = mi
     mi_img = int(np.min([np.floor(mi*10),9]))
-    print mi, mi_img
     restaurants.append(dict(name=result[0], YelpRating=result[1], 
                             FoodFinder=ffscore, Nsentences=result[4],
                             quantile=np.round(1000.*mi_real)/10.,
-                            rank=count, decimal=mi_img))
+                            rank=count, decimal=mi_img,
+                            text=result[6]))
     count += 1
 
 
