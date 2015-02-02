@@ -48,12 +48,11 @@ def food_output():
 
     # Determine which type of circle image to create
     mi_real = mi
-    mi_img = int(np.min([np.floor(mi*10),9]))
-    print mi, mi_img
+    mi_img = np.min([np.floor(mi),9])
     restaurants.append(dict(name=result[0], YelpRating=result[1], 
                             FoodFinder=ffscore, Nsentences=result[4],
-                            quantile=np.round(1000.*mi_real)/10.,
-                            rank=count, decimal=mi_img))
+                            arrow_type=arrow_type, quantile=np.round(1000.*mi_real)/10.,
+                            rank=count, decimal=mi_img ))
     count += 1
 
 
@@ -65,5 +64,6 @@ def food_output():
     restaurant_details.append(query_results)
 
   return render_template("output.html", input_term=input_term,
+                         arrow_type=arrow_type,
                          restaurants = restaurants, 
                          restaurant_details=restaurant_details)

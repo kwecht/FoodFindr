@@ -39,7 +39,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Project name</a>
+          <a class="navbar-brand" href="#">Food Findr</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -52,35 +52,61 @@
     </nav>
 
 
-<br><br>
+<br><br><br><br>
 
+  <!-- Text boxes and button for searching again  !-->
   <div class="container">
-    <div class="starter-template">
-        <h2>Results Page</h2>
-    </div>
-
     <div class = "container">
-
       <form  action="/output" method="GET">
         <div class="form-group">
-          <label for="ID">City  Name:</label>
+          <label for="ID">Find more food:</label>
           <input type="text" id="ID" name='ID' placeholder="more food ">
-        </div>
-        <div>
-          <button type="submit" class="btn btn-default btn-lg">Find this food!</button>
+          <label for="LOC" style="padding-left: 2cm">Near:</label>
+          <input type="text" id="LOC" name='LOC' placeholder="Phoenix, AZ" style="padding-right: 1cm" disabled="disabled">
+	  <button type="submit" class="btn btn-default btn-sm">Find more food!</button>
         </div>
       </form>
     </div>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
-
   </div> <!-- /.container-->
+
+<hr align="center" width="80%" style="height: 4px; color: #D00; background-color: #D00">
+
 
     <div class="container">
       <div class="starter-template">
-        <h3>Results:</h3>
-        <p class="lead">Below are restaurants with the best {{input_term}} in Yelp reviews.<br></p>
+        <p class="lead">Taste the best <b>{{input_term}}</b> near <b>Phoenix, AZ</b> at:<br></p>
       </div>
+
+      <hr align="center" width="80%" style="height: 2px; color: #000; background-color: #000">
+
+      <!-- Make class to hold Restaurant Information-->
+      {% for rest in restaurants %}
+      <div class="restaurant-rank">
+	<div class="restaurant-name">
+	  <p style="font-size: 30px"><b>#{{rest['rank']}}</b> {{rest['name']}}</p>
+	</div>
+
+	<div>
+	  <table alight="center">
+	    <tr>
+	      <th></th><th style="font-size: 125%">A top {{rest['quantile']}}% ranked {{input_term}}</th><th style="font-size: 125%">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; padding: 0px 25px 0px 25px">Yelp Score</th><th></th>
+	    </tr>
+	    <tr>
+	      <td></td>
+	      <td><p style="font-size: 20px">"A useful sentence from a review here."</p></td>
+	      <td style="text-align: center"><img src="static/images/ffcircle_{{rest['decimal']}}.png" style="height: 15%"></td>
+	      <td><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="height: 25%; padding: 0px 25px 0px 25px"</td>
+	    </tr>
+	  </table>
+
+	</div>
+
+	<hr align="center" style="height: 2px; color: #000; background-color: #000">
+      </div>
+      {% endfor %}
+
 
       <table class="table table-hover">
       <tr><th>Restaurant Name</th><th>Yelp Rating</th><th>Food Finder {{input_term}} Score</th><th># Sentences Evaluated</th></tr>

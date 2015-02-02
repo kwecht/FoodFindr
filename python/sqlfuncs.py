@@ -79,7 +79,7 @@ def query_term(string):
 
 
 
-def pandas2sql(dataframe,tablename):
+def sentences2sql(dataframe,tablename):
     """
     Save pandas dataframe to mysql database as a table.
     """
@@ -102,7 +102,7 @@ def pandas2sql(dataframe,tablename):
         print 'No TABLE {} in the database'.format(tablename)
 
 
-    cmd = "CREATE TABLE {0} (review_id text, sentence_id text,content text, lemmas text, stars float, FF_score float, FULLTEXT idx (content)) ENGINE=InnoDB".format(tablename)
+    cmd = "CREATE TABLE {0} (review_id VARCHAR(22), sentence_id VARCHAR(6),content text, lemmas text, stars float, FF_score float, FULLTEXT idx (content), PRIMARY KEY (review_id, sentence_id)) ENGINE=InnoDB".format(tablename)
     cur.execute(cmd)
 
     # Add one row at a time to the sentences table

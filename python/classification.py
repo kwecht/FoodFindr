@@ -93,12 +93,13 @@ def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
     if interrogate==True: original_lemmaCount = lemmaCount
 
     # 1) Trim by threshold
-    N = 10
+    N = 8
     lemmaCount = lemmaCount.loc[:,lemmaCount.max()>N]
     if interrogate==True: trimmed_lemmaCount = lemmaCount
 
     # 2) Trim by ratio of term frequency in group vs. out of group
     # Find all words that are unique to each group
+    print "building lemma_list with ",Nunique," unique lemmas"
     wordmatch = {}
     keeplemmas = []
     for ind in lemmaCount.index:
@@ -127,7 +128,7 @@ def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
 
 
     # Save list of lemmas to use for training
-    with open('../data/pandas/lemma_list.txt', 'w') as f:
+    with open('../data/pandas/lemma_list_'+str(Nunique)+'.txt', 'w') as f:
         for s in keeplemmas:
             f.write(s.encode('unicode-escape'))
             f.write('\n')
@@ -256,7 +257,7 @@ def build_training_input(dataframe,Nunique=200):
     import collections
 
     # Read lemmas to include as features in classifcation
-    with open('../data/pandas/lemma_list.txt', 'r') as f:
+    with open('../data/pandas/lemma_list_'+str(Nunique)+'.txt', 'r') as f:
         lemma_list = [line.decode('unicode-escape').rstrip(u'\n') for line in f]
 
     # Restore dataframe to use for training
@@ -391,7 +392,7 @@ def cross_validate(model,k,X,y,mean_accuracy=False):
 
 
 
-def classify_sentences(results,append_string='_mexican'):
+def classify_sentences(results,append_string='_mexican',Nunique=200):
     """
     Score sentences in a dataframe using a classification model
     developed in model_reviews.
@@ -409,7 +410,7 @@ def classify_sentences(results,append_string='_mexican'):
 
     # Build training input from dataframe
     sentences = pd.read_pickle('../data/pandas/sentences_lemmas' + append_string + '.pkl')
-    Xsent, ysent, indexsent = build_training_input(sentences)
+    Xsent, ysent, indexsent = build_training_input(sentences,Nunique=Nunique)
     sentence_prediction = results.predict(Xsent)
 
     # Place sentence classification predictions back into the sentenes dataframe

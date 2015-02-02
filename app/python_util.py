@@ -22,9 +22,53 @@ __author__      = "Kevin Wecht"
 
 ########################################################################
 
+import pdb
 import pymysql as db
+import numpy as np
 
 ########################################################################
+
+
+def order_output(output,ncutoff=50,nsigma=2):
+    """
+    Function for sorting output based on average foodfindr score 
+    and the number of sentences from which the score was derived.
+
+    ncutoff - number of samples necessary for sample standard deviation
+              to be less than 1.
+    nsigma - returned value is the lower end of the nsigma confidence
+             interval. For example, if nsigma = 2, then the lower bound
+             is approximately the edge of the 95% confidence interval.
+
+    Sorting value is the lower bound on 95% confidence interval 
+    of the estimate of the mean, approximated by:
+       SE_mean = sigma / sqrt(n)
+       sigma - standard deviation of sample
+       n - number of samples
+    If n < ncutoff and sigma < 1, set sigma=1. This is to prevent 
+       the high ranking of a restaurant with a very low sigma
+       that is caused by a small number of reviews.
+
+    Returns sorted list output.
+    """
+
+    # Replace standard deviations that are too small with 1.
+    #    output[ii][] = std
+    if output[4] < ncutoff:
+        output[3] = np.max([1.5,output[3]])
+
+    # Calculate lower bound of 95% confidence interval
+    nsigma = 2
+    try:
+        SE = output[3] / np.sqrt(output[4])
+        lowerbound = output[2] - 2.*SE
+    except:
+        lowerbound = 0.  # because output[4] might be None
+
+
+    return lowerbound
+
+
 
 
 def query_term(string):
@@ -46,31 +90,42 @@ def query_term(string):
     # Returns business name and number of reviews for each business
     cmd = """
           SELECT rest.business_name, rest.business_stars, 
-                 AVG(sent.FF_score) as FF_score, COUNT(sent.FF_score) as num_sent,
+                 AVG(sent.FF_score) as FF_score, 
+                 STD(sent.FF_score) as FF_std, COUNT(sent.FF_score) as num_sent,
                  rest.business_id
           FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored as sent
           WHERE rest.business_id=rev.business_id AND
                 rev.review_id=sent.review_id AND
                 sent.content LIKE '%{}%'
-          GROUP BY rest.business_id HAVING num_sent > 10
-          ORDER BY FF_score DESC
-          LIMIT 5;
+          GROUP BY rest.business_id;
           """.format(string)
 
     cur.execute(cmd)
-
-    # Create list of tuples with query results
-    #output = []
-    #for row in cur:
-    #    output.append(row)
-
-    # Save 
     output = cur.fetchall()
+
+    # Calculate value on which to sort results
+    #pdb.set_trace()
+    outlist = []
+    for row in output:
+        outlist.append(list(row))
+    outlist = sorted( outlist, key=order_output, reverse=True)
+    outlist = [v for v in outlist if v[2]!=None]
+
+    # Calculate mean info for returning to calling function
+    weighted_scores = [v[2]*v[4] for v in outlist]
+    weights = [v[2] for v in outlist]
+    mean_info = sum(weighted_scores) / sum(weights)
+    mean_info = []
+    for ii in range(len(outlist)):
+        mean_info.append(float(len(outlist)-ii)/len(outlist))
+
+    outlist = outlist[0:5]
+    mean_info = mean_info[0:5]
 
     cur.close()
     con.close()
 
-    return output
+    return outlist, mean_info
 
 
 

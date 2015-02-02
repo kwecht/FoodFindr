@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_class_results(frac2d):
     """
@@ -18,5 +19,56 @@ def plot_class_results(frac2d):
     matrix.set_clim([0,1])
     fig_name = 'img/test_matrix.png'
     plt.savefig(fig_name,bbox_inches='tight')
+
+    return True
+
+
+
+def make_score_circles():
+    """
+    makes circles for displaying the foodfindr scores
+    """
+
+    from matplotlib.patches import Circle
+    import matplotlib
+    from matplotlib.collections import PatchCollection
+
+    # Make 10 images, one for each 10% quantile of restaurants
+    for ii in np.arange(10):
+
+        # Set up plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_aspect(1)
+
+        # Plot circle
+        circ = Circle((0.,0.),1.)
+        colors = [ii/10.]
+        patches = [circ]
+        p = PatchCollection(patches, cmap=matplotlib.cm.RdYlGn, alpha=0.7,lw=8)
+        p.set_array(np.array(colors))
+        p.set_clim([0,0.9])
+        ax.add_collection(p)
+
+        # Add text to the image
+        if ii < 9:
+            tt = str(ii*10)+'-'+str((ii+1)*10)
+        else:
+            tt = str(ii*10)+'+'
+        plt.text(0,0.05,tt,fontsize=84,ha='center',va='center')
+
+        # Set up axes
+        ax.set_ylim([-1.1,1.1])
+        ax.set_xlim([-1.1,1.1])
+
+        # Remove axis labels and tickes
+        ax.set_xticks([])
+        ax.set_yticks([])
+        fig.patch.set_visible(False)
+        ax.patch.set_visible(False)
+        plt.axis('off')
+
+        filename = '../app/static/images/ffcircle_'+str(int(ii))+'.png'
+        plt.savefig(filename)
 
     return True
