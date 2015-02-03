@@ -30,9 +30,61 @@ __author__      = "Kevin Wecht"
 
 import numpy as np
 import pandas as pd
-import pymysql as mdb
+import pymysql as db
 
 ########################################################################
+
+def score_lowerbound(output,ncutoff=50,nsigma=2,calling=''):
+    """
+    Function for sorting output based on average foodfindr score 
+    and the number of sentences from which the score was derived.
+
+    ncutoff - number of samples necessary for sample standard deviation
+              to be less than 1.
+    nsigma - returned value is the lower end of the nsigma confidence
+             interval. For example, if nsigma = 2, then the lower bound
+             is approximately the edge of the 95% confidence interval.
+    calling - name of function calling order_output. This is necessary 
+              to know the format of sql results passed to order_output.
+
+    Sorting value is the lower bound on 95% confidence interval 
+    of the estimate of the mean, approximated by:
+       SE_mean = sigma / sqrt(n)
+       sigma - standard deviation of sample
+       n - number of samples
+    If n < ncutoff and sigma < 1, set sigma=1. This is to prevent 
+       the high ranking of a restaurant with a very low sigma
+       that is caused by a small number of reviews.
+
+    Returns sorted list output.
+    """
+
+    # Parameters to control
+    minstd = 1.5
+    nsigma = 2
+
+
+    # Replace standard deviations that are too small with a minimum value
+    #if calling=='query_term':
+    if output[4] < ncutoff:
+        output[3] = np.max([minstd,output[3]])
+
+    #elif calling=='find_outlier':
+    #    if output[4] < ncutoff:
+    #        output[3] = np.max([minstd,output[3]])
+    
+                
+    # Calculate lower bound of 95% confidence interval
+    try:
+        SE = output[3] / np.sqrt(output[4])
+        lowerbound = output[2] - nsigma*SE
+    except:
+        lowerbound = 0.  # because output[4] might be None
+
+
+    return lowerbound
+
+
 
 def query_term(string):
     """
@@ -45,7 +97,7 @@ def query_term(string):
     """
 
     # Start engine to connect to mysql
-    con = mdb.connect('localhost', 'root', '', 'yelp_sentiment_db', 
+    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
                       use_unicode=True, charset="utf8") #host, user, password, 
     cur = con.cursor()
 
@@ -92,7 +144,7 @@ def sentences2sql(dataframe,tablename):
     #dataframe['FF_class'] = classes
 
     # Write sentences dataframe to file
-    con = mdb.connect('localhost', 'root', '', 'yelp_sentiment_db', 
+    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
                       use_unicode=True, charset="utf8")
     cur = con.cursor()
     try:
@@ -130,3 +182,82 @@ def sentences2sql(dataframe,tablename):
     con.close()
 
     return True
+
+
+
+def calc_ranges():
+    """
+    Calculates the 10% bin edges of lowerbounds for the major categories in my search.
+    """
+
+
+    # List of popular terms to query. Make this a function in the future.
+    popular_terms = [{'guac':['guac']},
+                     {'food':['food']},{'service':['service','waiter','waitress']},
+                     {'atmosphere':['atmosphere','decor','environment']},
+                     {'drinks':['drinks','alcohol','margarita','tequila','beer','wine']}]
+
+
+    # Start engine to connect to mysql
+    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
+                      use_unicode=True, charset="utf8") #host, user, password, 
+    cur = con.cursor()
+
+    # Perform query for each popular term. Return a dictionary of 
+    #     terms : scores
+    scores = {}
+
+    # Make one query for each category in the popular_terms
+    for category in popular_terms:
+
+        terms = category.values()[0]
+
+        # Build sub-string to insert into the SQL query
+        like_list = ["sent.content LIKE '%{}%'".format(t) for t in terms]
+        like_string = ' OR '.join(like_list)
+
+        # Returns business name and number of reviews for each business
+        cmd = """
+        SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, STD(sent.FF_score) as FF_std, COUNT(sent.FF_score)
+        FROM Restaurant_mexican as bus,
+            Review_mexican as rev,
+            sentences_scored as sent
+        WHERE bus.business_id=rev.business_id AND
+            rev.review_id=sent.review_id AND 
+            ({0})
+        GROUP BY bus.business_id;
+        """.format(like_string)
+
+        cur.execute(cmd)
+    
+        output = cur.fetchall()
+
+        outlist = []
+        for row in output:
+            outlist.append(list(row))
+        outlist = sorted( outlist, key=score_lowerbound, reverse=False)
+        outlist = [v for v in outlist if v[2]!=None]
+
+
+        # Output list is now sorted by lowerbound score.
+        # Print values at 0-100% by 10% bins
+        print '-'*70
+        print '-'*70
+        print "Results for ", category
+        print len(outlist), len(outlist[0])
+        count = 0
+        len10 = np.round(len(outlist)/10.)
+        for ii in range(len(outlist)):
+            if (ii==len(outlist)-1) | (ii%len10==0):
+                print count, score_lowerbound(outlist[ii])
+                count += 1
+
+
+        if output==():
+            scores[category.keys()[0]] = (0,0,0,0,0)
+        else:
+            scores[category.keys()[0]] = output[0]
+
+
+    cur.close()
+    con.close()

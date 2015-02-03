@@ -29,7 +29,7 @@ import numpy as np
 ########################################################################
 
 
-def order_output(output,ncutoff=50,nsigma=2):
+def score_lowerbound(output,ncutoff=50,nsigma=2):
     """
     Function for sorting output based on average foodfindr score 
     and the number of sentences from which the score was derived.
@@ -52,16 +52,19 @@ def order_output(output,ncutoff=50,nsigma=2):
     Returns sorted list output.
     """
 
-    # Replace standard deviations that are too small with 1.
-    #    output[ii][] = std
+    # Parameters to control
+    minstd = 1.5
+    nsigma = 2
+
+
+    # Replace standard deviations that are too small with a minimum value
     if output[4] < ncutoff:
-        output[3] = np.max([1.5,output[3]])
+        output[3] = np.max([minstd,output[3]])
 
     # Calculate lower bound of 95% confidence interval
-    nsigma = 2
     try:
         SE = output[3] / np.sqrt(output[4])
-        lowerbound = output[2] - 2.*SE
+        lowerbound = output[2] - nsigma*SE
     except:
         lowerbound = 0.  # because output[4] might be None
 
@@ -108,7 +111,7 @@ def query_term(string):
     outlist = []
     for row in output:
         outlist.append(list(row))
-    outlist = sorted( outlist, key=order_output, reverse=True)
+    outlist = sorted( outlist, key=score_lowerbound, reverse=True)
     outlist = [v for v in outlist if v[2]!=None]
 
     # Calculate mean info for returning to calling function
@@ -166,7 +169,7 @@ def query_business(busID,query_term):
 
         # Returns business name and number of reviews for each business
         cmd = """
-        SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, COUNT(sent.FF_score)
+        SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, STD(sent.FF_score), COUNT(sent.FF_score)
         FROM Restaurant_mexican as bus,
             Review_mexican as rev,
             sentences_scored as sent
@@ -182,9 +185,9 @@ def query_business(busID,query_term):
     
         output = cur.fetchall()
         if output==():
-            scores[category.keys()[0]] = (0,0,0,0)
+            scores[category.keys()[0]] = [0,0,0,0,0]
         else:
-            scores[category.keys()[0]] = output[0]
+            scores[category.keys()[0]] = [v for v in output[0]]
 
     cur.close()
     con.close()
@@ -192,6 +195,51 @@ def query_business(busID,query_term):
     return scores
 
 
+
+def find_outlier(query_results,input_term):
+    """
+    Return the name and decile (which 10% bin) in which some query results fall
+    for the major hard-coded categories of food, atmosphere, drinks, and service.
+    """
+
+    # Maintain a list of decimal values corresponding to each bin.
+    # This is not elegant, but it's inefficient to do the same queries each time
+    #     someone uses the site.
+    bins = {'food':[-2.0,0.37867965644,1.25,1.75,2.0,2.26794919243,
+                    2.48550424457,2.72324943812,2.94444444444,3.23542486889,5.0],
+            'service':[-2.0,-0.62132034356,0.267949192431,1.0,1.27728414808,1.66666666667,
+                       2.0,2.11064036892,2.43901476809,2.77777777778,5.0],
+            'atmosphere':[-2.0,0.0,0.171572875254,1.0,1.25,1.87867965644,2.0,
+                          2.26794919243,2.72324943812,3.01410355182, 5.0],
+            'drinks':[-2.0,-0.12132034356,0.983930559977,1.14672783003,1.82273869354,
+                      2.0,2.30064126288,2.60858846194,2.80555555556,5.0]}
+
+    # Calculate lower bound of 95% confidence interval from query_results
+    itemrank = {k:0 for k in query_results.keys() if k!=input_term}
+    for item in itemrank:
+        lowerbound = score_lowerbound(query_results[item])
+        thisrank = np.digitize([lowerbound],np.array(bins[item]))-1
+        itemrank[item] = thisrank
+
+    # We now have a dictionary of the deciles in which each category falls
+    # Find the highest/lowest one of them
+    output = {'name':'', 'decile':-1}
+    mindec = min(itemrank, key=itemrank.get) # returns key with lowest value
+    maxdec = max(itemrank, key=itemrank.get) # returns key with highest value
+    print itemrank
+    print '000000000000000000000000000000000000000'
+    print maxdec
+    if (itemrank[maxdec] - 5) >= (4 - itemrank[mindec]):
+        output['name'] = maxdec
+        output['decile'] = np.float(itemrank[maxdec])
+    else:
+        output['name'] = mindec
+        output['decile'] = np.float(itemrank[mindec])
+
+
+    print "ending find_outlier:"
+    print output
+    return output['name'], int(output['decile'])
 
 
 

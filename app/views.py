@@ -49,7 +49,8 @@ def food_output():
     # Determine which type of circle image to create
     mi_real = mi
     mi_img = int(np.min([np.floor(mi*10),9]))
-    restaurants.append(dict(name=result[0], YelpRating=result[1], 
+    restaurants.append(dict(name=result[0], YelpRating=result[1],
+                            busid=result[5],
                             FoodFinder=ffscore, Nsentences=result[4],
                             quantile=np.round(1000.*mi_real)/10.,
                             rank=count, decimal=mi_img,
@@ -62,7 +63,17 @@ def food_output():
   restaurant_details = []
   for RID in rest_ids:
     query_results = util.query_business(RID,input_term)
+    query_results['also_name'], query_results['also_score'] = util.find_outlier(query_results,input_term)
+    # Place results in restaurant dictionary
+    for d in restaurants:
+        if RID==d['busid']:
+            d['also_name'] = query_results['also_name']
+            d['also_score'] = query_results['also_score']
     restaurant_details.append(query_results)
+
+
+  # Hard-code top/bottom N% values for common search terms (food, service, atmosphere, drinks)
+  # If a restaurant is in the top/bottom N%, display that label on the first results screen.
 
   return render_template("output.html", input_term=input_term,
                          restaurants = restaurants, 
