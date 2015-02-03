@@ -96,7 +96,7 @@ def query_term(string):
                  AVG(sent.FF_score) as FF_score, 
                  STD(sent.FF_score) as FF_std, COUNT(sent.FF_score) as num_sent,
                  rest.business_id, sent.content
-          FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored as sent
+          FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored_400 as sent
           WHERE rest.business_id=rev.business_id AND
                 rev.review_id=sent.review_id AND
                 sent.content LIKE '%{}%'
