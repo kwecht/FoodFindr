@@ -29,7 +29,7 @@ import numpy as np
 ########################################################################
 
 
-def score_lowerbound(output,ncutoff=50,nsigma=2):
+def score_lowerbound(output,ncutoff=20,nsigma=2):
     """
     Function for sorting output based on average foodfindr score 
     and the number of sentences from which the score was derived.
@@ -144,7 +144,8 @@ def query_business(busID,query_term):
 
     # List of popular terms to query. Make this a function in the future.
     popular_terms = [{query_term:[query_term]},
-                     {'food':['food']},{'service':['service','waiter','waitress']},
+                     {'food':['food']},
+                     {'service':['service','waiter','waitress']},
                      {'atmosphere':['atmosphere','decor','environment']},
                      {'drinks':['drinks','alcohol','margarita','tequila','beer','wine']}]
 
@@ -205,30 +206,30 @@ def find_outlier(query_results,input_term):
     # Maintain a list of decimal values corresponding to each bin.
     # This is not elegant, but it's inefficient to do the same queries each time
     #     someone uses the site.
-    bins = {'food':[-2.0,0.37867965644,1.25,1.75,2.0,2.26794919243,
-                    2.48550424457,2.72324943812,2.94444444444,3.23542486889,5.0],
-            'service':[-2.0,-0.62132034356,0.267949192431,1.0,1.27728414808,1.66666666667,
-                       2.0,2.11064036892,2.43901476809,2.77777777778,5.0],
-            'atmosphere':[-2.0,0.0,0.171572875254,1.0,1.25,1.87867965644,2.0,
-                          2.26794919243,2.72324943812,3.01410355182, 5.0],
-            'drinks':[-2.0,-0.12132034356,0.983930559977,1.14672783003,1.82273869354,
-                      2.0,2.30064126288,2.60858846194,2.80555555556,5.0]}
+    bins = {'food':[-2.0,0.37867965644,1.25,1.75,2.0,2.29101872004,2.50652466602,
+                    2.75,2.98333705193,3.25, 4.24390350205],
+            'service':[-2.0,-0.62132034356,0.267949192431,1.0,1.29467800954,1.66666666667,
+                       2.0,2.125,2.45131670195,2.7964947398,3.67109874428],
+            'atmosphere':[0 -2.0,0.0,0.171572875254,1.0,1.25,1.87867965644,2.0,
+                          2.26794919243,2.72324943812,3.01410355182, 4.71730635364],
+            'drinks':[-2.0,-0.12132034356,0.983930559977,1.14672783003,1.82273869354, 2.0,
+                      2.30064126288,2.60858846194,2.87961601261,3.26794919243, 4.20804493973]}
 
     # Calculate lower bound of 95% confidence interval from query_results
     itemrank = {k:0 for k in query_results.keys() if k!=input_term}
     for item in itemrank:
         lowerbound = score_lowerbound(query_results[item])
+        print input_term, item, lowerbound
         thisrank = np.digitize([lowerbound],np.array(bins[item]))-1
         itemrank[item] = thisrank
+
 
     # We now have a dictionary of the deciles in which each category falls
     # Find the highest/lowest one of them
     output = {'name':'', 'decile':-1}
     mindec = min(itemrank, key=itemrank.get) # returns key with lowest value
     maxdec = max(itemrank, key=itemrank.get) # returns key with highest value
-    print itemrank
-    print '000000000000000000000000000000000000000'
-    print maxdec
+
     if (itemrank[maxdec] - 5) >= (4 - itemrank[mindec]):
         output['name'] = maxdec
         output['decile'] = np.float(itemrank[maxdec])
@@ -237,8 +238,6 @@ def find_outlier(query_results,input_term):
         output['decile'] = np.float(itemrank[mindec])
 
 
-    print "ending find_outlier:"
-    print output
     return output['name'], int(output['decile'])
 
 

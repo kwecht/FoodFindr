@@ -63,17 +63,34 @@ def food_output():
   restaurant_details = []
   for RID in rest_ids:
     query_results = util.query_business(RID,input_term)
-    query_results['also_name'], query_results['also_score'] = util.find_outlier(query_results,input_term)
-    # Place results in restaurant dictionary
-    for d in restaurants:
-        if RID==d['busid']:
-            d['also_name'] = query_results['also_name']
-            d['also_score'] = query_results['also_score']
+    #query_results['also_name'], query_results['also_score'] = util.find_outlier(query_results,input_term)
+    ## Place results in restaurant dictionary
+    #for d in restaurants:
+    #    if RID==d['busid']:
+    #        d['also_name'] = query_results['also_name']
+    #        d['also_score'] = query_results['also_score']
     restaurant_details.append(query_results)
 
 
-  # Hard-code top/bottom N% values for common search terms (food, service, atmosphere, drinks)
-  # If a restaurant is in the top/bottom N%, display that label on the first results screen.
+  # Find the category (food, service, atmosphere, drinks) in which 
+  #    each restaurant ranks highest compared to its competitors
+  # nRestaurant x nFeatures array to hold scores
+  categories = ['food','service','atmosphere','drinks']
+  scores = np.zeros((len(restaurants),len(categories)))
+  print scores.shape
+  for ii in range(len(restaurants)):
+    for jj in range(len(categories)):
+      scores[ii,jj] = util.score_lowerbound(restaurant_details[ii][categories[jj]])
+
+  # Replace each numerical value with an integer based on its rank in the column
+  for jj in range(len(categories)):
+    scores[:,jj] = scores[:,jj].argsort()
+
+  # For each row, find the lowest value in the row, and add that category name 
+  #     to the dictionary in the list of restaurant details dicts
+  for ii in range(len(restaurant_details)):
+    restaurants[ii]['recommend_type'] = categories[scores[ii,:].argmin()]
+
 
   return render_template("output.html", input_term=input_term,
                          restaurants = restaurants, 

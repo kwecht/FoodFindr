@@ -91,14 +91,14 @@
 	<div>
 	  <table alight="center">
 	    <tr style="border-bottom: 1px solid #000;">
-	      <th></th><th style="font-size: 125%"><u>A top {{rest['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center">Also Known For {{rest['also_name']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
+	      <th></th><th style="font-size: 125%"><u>A top {{rest['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center">Also Known For {{rest['recommend_type']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
 	    </tr>
 	    <tr>
 	      <td></td>
 	      <td style="width: 400px"><p style="font-size: 20px">"{{rest['text']}}"</p></td>
 	      <td style="width: 150px"><img align="middle" src="static/images/ffcircle_{{rest['decimal']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
 	      <td><img src="static/images/ffcircle_{{rest['also_score']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
-	      <td style="width: 150px"><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="height: 25%; padding: 0px 25px 0px 25px"></td>
+	      <td><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
 	    </tr>
 	  </table>
 

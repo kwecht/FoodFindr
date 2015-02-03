@@ -34,7 +34,7 @@ import pymysql as db
 
 ########################################################################
 
-def score_lowerbound(output,ncutoff=50,nsigma=2,calling=''):
+def score_lowerbound(output,ncutoff=20,nsigma=2,calling=''):
     """
     Function for sorting output based on average foodfindr score 
     and the number of sentences from which the score was derived.
