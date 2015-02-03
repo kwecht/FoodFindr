@@ -84,14 +84,39 @@ def food_output():
 
   # Replace each numerical value with an integer based on its rank in the column
   for jj in range(len(categories)):
-    scores[:,jj] = scores[:,jj].argsort()
+    print 70*'-'
+    print scores[:,jj]
+    scores[:,jj] = scores[:,jj].argsort().argsort()#[::-1]
+    print scores[:,jj]
 
   # For each row, find the lowest value in the row, and add that category name 
   #     to the dictionary in the list of restaurant details dicts
   for ii in range(len(restaurant_details)):
-    restaurants[ii]['recommend_type'] = categories[scores[ii,:].argmin()]
+    restaurants[ii]['recommend_type'] = categories[scores[ii,:].argmax()]
+
+
+  # Only send the top 5 results to be rendered on the page.
+  restaurants_long = restaurants
+  restaurants = restaurants[0:5]
+  restaurant_details_long = restaurant_details
+  restaurant_details = restaurant_details[0:5]
+
+  # Use the top N scores to calculate relative ranks for
+  #   service, food, atmosphere, and drinks
+  decimals = np.zeros(scores.shape)
+  for ii in range(len(restaurants_long)):
+    for jj in range(len(categories)):
+      decimals[ii,jj] = int( 10.* scores[ii,jj] / float(len(restaurants_long)) )
+    
+    print ii, scores[ii,:], decimals[ii,:]
+
+  # Add decimal info to the restaurant_details data
+  for ii in range(len(restaurant_details)):
+    for jj in range(len(categories)):
+      restaurant_details[ii][categories[jj]].append(int(decimals[ii,jj]))
 
 
   return render_template("output.html", input_term=input_term,
                          restaurants = restaurants, 
                          restaurant_details=restaurant_details)
+

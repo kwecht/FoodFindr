@@ -122,8 +122,8 @@ def query_term(string):
     for ii in range(len(outlist)):
         mean_info.append(float(len(outlist)-ii)/len(outlist))
 
-    outlist = outlist[0:5]
-    mean_info = mean_info[0:5]
+    outlist = outlist[0:20]
+    mean_info = mean_info[0:20]
 
 
     cur.close()
