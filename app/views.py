@@ -108,12 +108,27 @@ def food_output():
     for jj in range(len(categories)):
       decimals[ii,jj] = int( 10.* scores[ii,jj] / float(len(restaurants_long)) )
     
-    print ii, scores[ii,:], decimals[ii,:]
+    #print ii, scores[ii,:], decimals[ii,:]
 
   # Add decimal info to the restaurant_details data
   for ii in range(len(restaurant_details)):
     for jj in range(len(categories)):
       restaurant_details[ii][categories[jj]].append(int(decimals[ii,jj]))
+
+  # Make each restaurant details dictionary a dictionary in restaurants
+  for ii in range(len(restaurant_details)):
+    print '='*70
+    print type(restaurant_details[ii])
+    print restaurant_details[ii]
+    print type(restaurants[ii])
+    print restaurants[ii]
+    restaurants[ii]['details'] = restaurant_details[ii]
+    print '-'*70
+    print type(restaurant_details[ii])
+    print restaurant_details[ii]
+    print type(restaurants[ii])
+    print restaurants[ii]
+    print '='*70
 
 
   return render_template("output.html", input_term=input_term,

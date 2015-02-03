@@ -30,6 +30,9 @@
 
   <body>
 
+
+
+
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
@@ -71,7 +74,7 @@
     <script src="static/js/bootstrap.min.js"></script>
   </div> <!-- /.container-->
 
-<hr align="center" width="80%" style="height: 4px; color: #D00; background-color: #D00">
+<hr align="center" width="80%" style="height: 4px; color: #700; background-color: #700">
 
 
     <div class="container">
@@ -85,145 +88,121 @@
       {% for rest in restaurants %}
       <div class="restaurant-rank">
 	<div class="restaurant-name">
-	  <p style="font-size: 30px"><b>#{{rest['rank']}}</b> {{rest['name']}}</p>
+	  <p style="font-size: 30px"><a href="javascript:code_toggle({{rest['rank']}})" style="color: #770000"><b>#{{rest['rank']}}</b> {{rest['name']}}</a></p>
 	</div>
 
 	<div>
-	  <table alight="center">
+	  <table align="center">
 	    <tr style="border-bottom: 1px solid #000;">
 	      <th></th><th style="font-size: 125%"><u>A top {{rest['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center; width: 150px">Also Known for {{rest['recommend_type']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
 	    </tr>
 	    <tr>
 	      <td></td>
-	      <td style="width: 400px"><p style="font-size: 20px">"{{rest['text']}}"</p></td>
+	      <td style="width: 400px"><p style="font-size: 16px">"{{rest['text']}}"</p></td>
 	      <td style="width: 150px"><img align="middle" src="static/images/ffcircle_{{rest['decimal']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
-	      <td><img src="static/images/{{rest['recommend_type']}}_art.png" style="height: 50px; padding: 0px 25px 0px 25px"></td>
-	      <td><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
+	      <td align="center"><img src="static/images/{{rest['recommend_type']}}_art.png" style="height: 50px; padding: 0px 25px 0px 25px"></td>
+	      <td align="center"><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
 	    </tr>
 	  </table>
-
 	</div>
 
-	<hr align="center" style="height: 2px; color: #000; background-color: #000">
-      </div>
-      {% endfor %}
-    </div>
-
-
-<hr align="center" width="80%" style="height: 4px; color: #D00; background-color: #D00">
-<hr align="center" width="80%" style="height: 4px; color: #D00; background-color: #D00">
-<hr align="center" width="80%" style="height: 4px; color: #D00; background-color: #D00">
-
-
-    <div class="container">
-
-      <!-- Make class to hold Restaurant Information like in the table above-->
-      <div class="restaurant-rank">
-	<div class="restaurant-name">
-	  <p style="font-size: 30px"><b>#{{restaurants[2]['rank']}}</b> {{restaurants[2]['name']}}</p>
-	</div>
-
-	<div>
-	  <table alight="center">
-	    <tr style="border-bottom: 1px solid #000;">
-	      <th></th><th style="font-size: 125%"><u>A top {{restaurants[2]['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center; width: 150px">Also Known for {{restaurants[2]['recommend_type']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
-	    </tr>
-	    <tr>
-	      <td></td>
-	      <td style="width: 400px"><p style="font-size: 20px">"{{restaurants[2]['text']}}"</p></td>
-	      <td style="width: 150px"><img align="middle" src="static/images/ffcircle_{{restaurants[2]['decimal']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
-	      <td><img src="static/images/{{restaurants[2]['recommend_type']}}_art.png" style="height: 50px; padding: 0px 25px 0px 25px"></td>
-	      <td><img src="static/images/yelp_{{restaurants[2]['YelpRating']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
-	    </tr>
-	  </table>
-
-	</div>
-
-	<hr align="center" style="height: 2px; color: #000; background-color: #000">
-      </div>
-
+	  <!-- Restaurant Details div-->
+	  
       <!-- Additional information about the relative -->
-      <div class="row placeholders">
-	<p align="center" style="font-size:36px">FoodFindr score relative to top 20 {{input_term}} restaurants</p>
+      <div class="row placeholders" id="{{rest['rank']}}">
+	<hr align="center" style="height: 1px; width: 80%; color: #000; background-color: #000">
+	<p align="center" style="font-size:36px">Compared to top {{input_term}} restaurants</p>
         <div class="col-xs-6 col-sm-3 placeholder">
           <h4 align="center"><u>Food</u></h4>
-	  <img src="static/images/food_art.png" style="height: 50px"/>
-          <img src="static/images/ffcircle_{{restaurant_details[2]['food'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <img src="static/images/food_art.png" style="height: 50px; margin-left: 80px"/>
+          <img src="static/images/ffcircle_{{rest['details']['food'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
-          <h4 align="center"><u>Drinks</u></h4>
-	  <img src="static/images/drinks_art.png" style="height: 50px"/>
-          <img src="static/images/ffcircle_{{restaurant_details[2]['drinks'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+          <h4 align="center"><u>Drinks</u></h4> 
+	  <img src="static/images/drinks_art.png" class="img-responsive" style="height: 50px; margin-left: 80px"/>
+          <img src="static/images/ffcircle_{{rest['details']['drinks'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
           <h4 align="center"><u>Service</u></h4>
-	  <img src="static/images/service_art.png" style="height: 50px"/>
-          <img src="static/images/ffcircle_{{restaurant_details[2]['service'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <img src="static/images/service_art.png" style="height: 50px; margin-left: 80px"/>
+          <img src="static/images/ffcircle_{{rest['details']['service'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
           <h4 align="center"><u>Atmosphere</u></h4>
-	  <img src="static/images/atmosphere_art.png" style="height: 50px"/>
-          <img src="static/images/ffcircle_{{restaurant_details[2]['atmosphere'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <img src="static/images/atmosphere_art.png" style="height: 50px; margin-left: 80px"/>
+          <img src="static/images/ffcircle_{{rest['details']['atmosphere'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
         </div>
       </div>
 
+
+	<hr align="center" style="height: 2px; color: #000; background-color: #000">
+      </div>
+      {% endfor %}
     </div>
 
 
 
 
-<br><br><br><br><br><br>
 
 
 
 
-
-    <div>
-
-      <table class="table table-hover">
-      <tr><th>Restaurant Name</th><th>Yelp Rating</th><th>Food Finder {{input_term}} Score</th><th># Sentences Evaluated</th></tr>
-      {% for rest in restaurants %}
-      <tr><td>{{ rest['name'] }}</td><td>{{ rest['YelpRating']}}</td><td> {{ rest['FoodFinder'] }}</td><td>{{ rest['Nsentences']}}</td></tr>
-      {% endfor %}
-      </table>
-
-
-     </div><!-- /.container -->
-
-
-    <div class="container">
-      <div class="starter-template">
-        <h3>Restaurant Information:</h3>
-        <p class="lead">Here, we display information about individual restaurants.</p>
-      </div>
-
-      {% for restdeet in restaurant_details %}
-      <h4>Restaurant Name: {{restdeet[restdeet.keys()[0]][0]}}</h4>
-      <table class="table table-hover">
-	<tr><th>Category</th><th>Yelp Rating</th><th>FoodFindr Score</th><th>Number of Sentences</th></tr>
-        {% for key in restdeet.keys() %}
-
-        <tr><td>{{key}}</td><td>{{restdeet[key][1]}}</td><td> {{restdeet[key][2]}}</td><td>{{restdeet[key][3]}}</td></tr>
-
-        {% endfor %}
-      </table>
-      <br>
-      
-      {% endfor %}
-
-
-      <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-      <script src="static/js/bootstrap.min.js"></script>
-
-
-     </div><!-- /.container -->
-
+    <!-- Javascript function for hiding/showing restaurant details -->
+    <script>
+      var code_show1 = false;
+      var code_show2 = false;
+      var code_show3 = false;
+      var code_show4 = false;
+      var code_show5 = false;
+      $('div.row.placeholders').hide();
+      function code_toggle(ID) {
+        if (ID==1){
+          if (code_show1){
+            $('#'+ID).hide();
+          } else {
+            $('#'+ID).show();
+          }
+          code_show1 = !code_show1
+        } else if (ID==2){
+          if (code_show2){
+            $('#'+ID).hide();
+          } else {
+            $('#'+ID).show();
+          }
+          code_show2 = !code_show2
+        } else if (ID==3){
+          if (code_show3){
+            $('#'+ID).hide();
+          } else {
+            $('#'+ID).show();
+          }
+          code_show3 = !code_show3
+        } else if (ID==4){
+          if (code_show4){
+            $('#'+ID).hide();
+          } else {
+            $('#'+ID).show();
+          }
+          code_show4 = !code_show4
+        } else if (ID==5){
+          if (code_show5){
+            $('#'+ID).hide();
+          } else {
+            $('#'+ID).show();
+          }
+          code_show5 = !code_show5
+        }
+      }
+      $( document ).ready(code_toggle);
+    </script>
+    <script>$('div.row.placeholders').hide()</script>
+    
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="../static/js/bootstrap.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="../static/js/bootstrap.js"></script>
   </body>
