@@ -173,7 +173,7 @@ def query_business(busID,query_term):
         SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, STD(sent.FF_score), COUNT(sent.FF_score)
         FROM Restaurant_mexican as bus,
             Review_mexican as rev,
-            sentences_scored as sent
+            sentences_scored_400 as sent
         WHERE bus.business_id=rev.business_id AND
             rev.review_id=sent.review_id AND 
             bus.business_id='{0}' AND 

@@ -9,3 +9,4 @@ data/
 python/img/
 images/
 *.png
+*.sql
