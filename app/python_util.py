@@ -22,9 +22,9 @@ __author__      = "Kevin Wecht"
 
 ########################################################################
 
-import pdb
 import pymysql as db
 import numpy as np
+import sql_cfg
 
 ########################################################################
 
@@ -122,8 +122,9 @@ def query_term(string):
     """
 
     # Start engine to connect to mysql
-    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
-                      use_unicode=True, charset="utf8") #host, user, password, 
+    con = db.connect(host=sql_cfg.database['host'], db=sql_cfg.database['name'],
+                     user=sql_cfg.database['user'], passwd=sql_cfg.database['passwd'],
+                      use_unicode=True, charset="utf8")
     cur = con.cursor()
 
     # Perform query.
@@ -189,8 +190,9 @@ def query_business(busID,query_term):
 
 
     # Start engine to connect to mysql
-    con = db.connect('localhost', 'root', '', 'yelp_sentiment_db', 
-                      use_unicode=True, charset="utf8") #host, user, password, 
+    con = db.connect(host=sql_cfg.database['host'], db=sql_cfg.database['name'],
+                     user=sql_cfg.database['user'], passwd=sql_cfg.database['passwd'],
+                      use_unicode=True, charset="utf8")
     cur = con.cursor()
 
     # Perform query for each popular term. Return a dictionary of 
