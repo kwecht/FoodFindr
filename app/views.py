@@ -30,32 +30,15 @@ def food_output():
   input_term = request.args.get('ID')
 
   # Query review data for sentence scores on the search term
-  # mean_info contains quantile ranking of food-findr scores
-  # for a given restaurant compared to all mexican restaurants.
-  query_results, mean_info = util.query_term(input_term)
-  restaurants = []
-  count = 1
-  for result,mi in zip(query_results,mean_info):
-    ffscore = np.round(100*result[2])/100.
+  restaurants = util.query_term(input_term)
 
-    # Get 
-    #if mi>0.67:
-    #    arrow_type = 'up_arrow'
-    #elif mi<0.33:
-    #    arrow_type = 'down_arrow'
-    #else:
-    #    arrow_type = 'side_arrow'
 
-    # Determine which type of circle image to create
-    mi_real = mi
-    mi_img = int(np.min([np.floor(mi*10),9]))
-    restaurants.append(dict(name=result[0], YelpRating=result[1],
-                            busid=result[5],
-                            FoodFinder=ffscore, Nsentences=result[4],
-                            quantile=np.round(1000.*mi_real)/10.,
-                            rank=count, decimal=mi_img,
-                            text=result[6]))
-    count += 1
+
+  # Start here, transforming info into that which can be more easily
+  #   be shown on the 5 point scale
+
+
+
 
 
   # Query review data for sentences scores on various features of the top 5 restaurants

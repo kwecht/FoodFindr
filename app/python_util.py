@@ -73,6 +73,43 @@ def score_lowerbound(output,ncutoff=20,nsigma=2):
 
 
 
+def FFscore_from_group(group):
+    """
+    Returns bayes dirichlet score as the function above
+    but implemented from a pandas grouped dataframe.
+    """
+
+    prior_strength = 5.
+    prior = np.array([16711,10247,17443,51856,50386])
+    prior = prior_strength*prior/prior.sum()
+
+    # Value of a vote for each category.
+    value = np.arange(1,6)
+
+    # Make 5-element array of votes
+    votes = np.zeros(5)
+    votes[group['rating']-1] = group['nrating']
+
+    # Calculate final score as weighted average of votes,
+    #    regularized by the prior
+    posterior = prior + votes
+    temp_score = value*posterior
+    final_score = temp_score.sum() / posterior.sum()
+
+    return final_score
+
+
+def rawavg(group):
+    """
+    Calculates raw average of ratings.
+    """
+
+    value = np.arange(1,6)
+    votes = np.zeros(5)
+    votes[group['rating']-1] = group['nrating']
+
+    return value*votes / votes.sum()
+
 
 def query_term(string):
     """
@@ -93,43 +130,44 @@ def query_term(string):
     # Returns business name and number of reviews for each business
     cmd = """
           SELECT rest.business_name, rest.business_stars, 
-                 AVG(sent.FF_score) as FF_score, 
-                 STD(sent.FF_score) as FF_std, COUNT(sent.FF_score) as num_sent,
+                 COUNT(sent.FF_score) as FF_count, sent.FF_score, 
                  rest.business_id, sent.content
           FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored_400 as sent
           WHERE rest.business_id=rev.business_id AND
                 rev.review_id=sent.review_id AND
                 sent.content LIKE '%{}%'
-          GROUP BY rest.business_id;
+          GROUP BY rest.business_id, sent.FF_score
+          ORDER BY rest.business_id, sent.FF_score;
           """.format(string)
 
     cur.execute(cmd)
     output = cur.fetchall()
 
-    # Calculate value on which to sort results
-    # This is the score that I'll call the FoodFindr results
-    outlist = []
-    for row in output:
-        outlist.append(list(row))
-    outlist = sorted( outlist, key=score_lowerbound, reverse=True)
-    outlist = [v for v in outlist if v[2]!=None]
+    # Calculate FoodFindr score and raw (unregularized) average for each restaurant
+    outlist = [v for v in output if v[2]!=0]
+    df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content'])
+    grouped = df.groupby('ID')
+    ffscore = grouped.apply(FFscore_from_group)
+    rawavg = grouped.apply(rawavg)
+    newdf = grouped['yelp','content','name'].last()
+    newdf['ffscore'] = ffscore
+    newdf['rawavg'] = rawavg
+    newdf['ffround'] = np.round(newdf['ffscore']*2.)/2.0
 
-    # Calculate mean info for returning to calling function
-    #weighted_scores = [v[2]*v[4] for v in outlist]
-    #weights = [v[2] for v in outlist]
-    #mean_info = sum(weighted_scores) / sum(weights)
-    mean_info = []
-    for ii in range(len(outlist)):
-        mean_info.append(float(len(outlist)-ii)/len(outlist))
+    # Limit results to top 5 FoodFindr scores
+    nreturn = 5
+    newdf = newdf.sort('ffscore',ascending=False).iloc[0:nreturn,:]
+    newdf['rank'] = np.arange(nreturn)+1
+    newdf = newdf.reset_index()
 
-    outlist = outlist[0:20]
-    mean_info = mean_info[0:20]
-
+    # Turn into list of restaurant information dictionaries
+    newdf = newdf.T.to_dict().values()
 
     cur.close()
     con.close()
 
-    return outlist, mean_info
+    # Return business name, business id, FFscore, RawAverage, example sentence
+    return newdf
 
 
 

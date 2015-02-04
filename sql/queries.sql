@@ -18,3 +18,6 @@ SELECT nrev1, nrev2, nrev1 / nrev2 AS FRAC, id1 FROM
         ON (NUMERATOR.id1=DENOMINATOR.id2) 
     WHERE nrev2 > 10
     ORDER BY FRAC;
+
+
+

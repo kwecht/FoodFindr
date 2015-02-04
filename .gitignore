@@ -10,3 +10,4 @@ python/img/
 images/
 *.png
 *.sql
+sql_cfg.py
