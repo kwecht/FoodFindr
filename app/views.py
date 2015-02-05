@@ -6,18 +6,20 @@ import python_util as util
 
 db = mdb.connect(user="root", host="localhost", db="world_innodb", charset='utf8')
 
-@app.route('/')
-@app.route('/index')
-def index():
-    return render_template("index.html",
-       title = 'Home', user = { 'nickname': 'Miguel' },
-       )
+#@app.route('/')
+#@app.route('/index')
+#def index():
+#    return render_template("index.html",
+#       title = 'Home', user = { 'nickname': 'Miguel' },
+#       )
 
 
 @app.route('/about')
 def about_page():
   return render_template("about.html")
 
+@app.route('/')
+@app.route('/index')
 @app.route('/input')
 def food_input():
   return render_template("input.html")
