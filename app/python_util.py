@@ -89,7 +89,10 @@ def FFscore_from_group(group):
 
     # Make 5-element array of votes
     votes = np.zeros(5)
-    votes[group['rating']-1] = group['nrating']
+    for star,nvotes in zip(group['rating'].values,group['nrating'].values):
+        votes[star-1] = nvotes
+
+    #votes[group['rating']-1] = group['nrating']
 
     # Calculate final score as weighted average of votes,
     #    regularized by the prior
@@ -107,7 +110,9 @@ def rawavg(group):
 
     value = np.arange(1,6)
     votes = np.zeros(5)
-    votes[group['rating']-1] = group['nrating']
+    for star,nvotes in zip(group['rating'].values,group['nrating'].values):
+        votes[star-1] = nvotes
+    #votes[group['rating']-1] = group['nrating']
 
     return (value*votes).sum() / votes.sum()
 
