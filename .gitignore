@@ -11,3 +11,4 @@ images/
 *.png
 *.sql
 sql_cfg.py
+run.py

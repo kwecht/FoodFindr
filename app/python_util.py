@@ -25,6 +25,7 @@ __author__      = "Kevin Wecht"
 import pymysql as db
 import numpy as np
 import sql_cfg
+import pandas as pd
 
 ########################################################################
 
@@ -79,7 +80,7 @@ def FFscore_from_group(group):
     but implemented from a pandas grouped dataframe.
     """
 
-    prior_strength = 5.
+    prior_strength = 10.
     prior = np.array([16711,10247,17443,51856,50386])
     prior = prior_strength*prior/prior.sum()
 
@@ -108,7 +109,7 @@ def rawavg(group):
     votes = np.zeros(5)
     votes[group['rating']-1] = group['nrating']
 
-    return value*votes / votes.sum()
+    return (value*votes).sum() / votes.sum()
 
 
 def query_term(string):
@@ -132,7 +133,7 @@ def query_term(string):
     cmd = """
           SELECT rest.business_name, rest.business_stars, 
                  COUNT(sent.FF_score) as FF_count, sent.FF_score, 
-                 rest.business_id, sent.content
+                 rest.business_id, sent.content, rest.city
           FROM Restaurant_mexican as rest, Review_mexican as rev, sentences_scored_400 as sent
           WHERE rest.business_id=rev.business_id AND
                 rev.review_id=sent.review_id AND
@@ -146,17 +147,17 @@ def query_term(string):
 
     # Calculate FoodFindr score and raw (unregularized) average for each restaurant
     outlist = [v for v in output if v[2]!=0]
-    df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content'])
+    df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content','city'])
     grouped = df.groupby('ID')
     ffscore = grouped.apply(FFscore_from_group)
-    rawavg = grouped.apply(rawavg)
-    newdf = grouped['yelp','content','name'].last()
-    newdf['ffscore'] = ffscore
-    newdf['rawavg'] = rawavg
+    ffavg = grouped.apply(rawavg)
+    newdf = grouped['yelp','content','name','city'].last()
+    newdf['ffscore'] = np.round(ffscore.values,decimals=2)
+    newdf['ffavg'] = np.round(ffavg.values,decimals=2)
     newdf['ffround'] = np.round(newdf['ffscore']*2.)/2.0
 
     # Limit results to top 5 FoodFindr scores
-    nreturn = 5
+    nreturn = 10
     newdf = newdf.sort('ffscore',ascending=False).iloc[0:nreturn,:]
     newdf['rank'] = np.arange(nreturn)+1
     newdf = newdf.reset_index()
@@ -210,25 +211,45 @@ def query_business(busID,query_term):
 
         # Returns business name and number of reviews for each business
         cmd = """
-        SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, STD(sent.FF_score), COUNT(sent.FF_score)
-        FROM Restaurant_mexican as bus,
+        SELECT rest.business_name, rest.business_stars, 
+               COUNT(sent.FF_score) as FF_count, sent.FF_score, 
+               rest.business_id, sent.content
+        FROM Restaurant_mexican as rest,
             Review_mexican as rev,
             sentences_scored_400 as sent
-        WHERE bus.business_id=rev.business_id AND
+        WHERE rest.business_id=rev.business_id AND
             rev.review_id=sent.review_id AND 
-            bus.business_id='{0}' AND 
+            rest.business_id='{0}' AND 
             ({1})
-        GROUP BY bus.business_id
-        ORDER BY FF_score DESC;
+        GROUP BY sent.FF_score
+        ORDER BY sent.FF_score;
         """.format(busID,like_string)
 
         cur.execute(cmd)
-    
         output = cur.fetchall()
-        if output==():
-            scores[category.keys()[0]] = [0,0,0,0,0]
-        else:
-            scores[category.keys()[0]] = [v for v in output[0]]
+
+        #print cmd
+        #print output
+
+        # Calculate FoodFindr score and row (unregularized) average
+        outlist = [v for v in output if v[2]!=0]
+        if outlist==[]:
+            scores[category.keys()[0]] = {'ffavg': 0.0, 'ffround': 0.0, 'name': u'', 
+                                          'yelp': 0.0, 'content': u'', 'ffscore': 0.0}
+            continue
+
+        df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content'])
+        grouped = df.groupby('ID')
+        ffscore = grouped.apply(FFscore_from_group)
+        ffavg = grouped.apply(rawavg)
+        newdf = grouped['yelp','content','name'].last()
+        newdf['ffscore'] = np.round(ffscore,decimals=2)
+        newdf['ffavg'] = np.round(ffavg,decimals=2)
+        newdf['ffround'] = np.round(newdf['ffscore']*2.)/2.0
+
+        # Place into dictionary of results
+        scores[category.keys()[0]] = newdf.T.to_dict().values()[0]
+
 
     cur.close()
     con.close()

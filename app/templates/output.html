@@ -94,14 +94,14 @@
 	<div>
 	  <table align="center" cellspacing="0">
 	    <tr style="border-bottom: 1px solid #000;">
-	      <th></th><th style="font-size: 125%"><u>A top {{rest['quantile']}}% ranked {{input_term}}</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center; width: 150px">Also Known for {{rest['recommend_type']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
+	      <th></th><th style="font-size: 125%"><u>{{rest['city'].title()}}, AZ</u></th><th style="font-size: 125%; text-align: center">FoodFindr {{input_term}} Score</th><th style="font-size: 125%; text-align: center; width: 150px">Also Known for {{rest['recommend_type']}}!</th><th style="font-size: 125%; padding: 0px 25px 0px 25px; text-align: center">Yelp Score</th>
 	    </tr>
 	    <tr>
 	      <td></td>
-	      <td style="width: 400px"><p style="font-size: 16px">"{{rest['text']}}"</p></td>
-	      <td style="width: 150px"><img align="middle" src="static/images/ffcircle_{{rest['decimal']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
+	      <td style="width: 400px"><p style="font-size: 16px">"{{rest['content']}}"</p></td>
+	      <td style="width: 150px"><p>{{rest['ffscore']}}</p><img align="middle" src="static/images/ffcircle_{{rest['ffround']}}.png" style="height: 15%; padding: 0px 25px 0px 25px"></td>
 	      <td align="center"><img src="static/images/{{rest['recommend_type']}}_art.png" style="height: 50px; padding: 0px 25px 0px 25px"></td>
-	      <td align="center"><img src="static/images/yelp_{{rest['YelpRating']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
+	      <td align="center"><img src="static/images/yelp_{{rest['yelp']}}.png" style="width: 160px; padding: 0px 25px 0px 25px"></td>
 	    </tr>
 	  </table>
 	</div>
@@ -111,26 +111,30 @@
       <!-- Additional information about the relative -->
       <div class="row placeholders" id="{{rest['rank']}}">
 	<hr align="center" style="height: 1px; width: 80%; color: #000; background-color: #000">
-	<p align="center" style="font-size:36px">Compared to top {{input_term}} restaurants</p>
+	<p align="center" style="font-size:24px">Compared to top {{input_term}} restaurants</p>
         <div class="col-xs-6 col-sm-3 placeholder">
-          <h4 align="center"><u>Food</u></h4>
+          <h4 align="center"><u>Food = {{rest['details']['food']['ffscore']}}</u></h4>
 	  <img src="static/images/food_art.png" style="height: 50px; margin-left: 80px"/>
-          <img src="static/images/ffcircle_{{rest['details']['food'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+          <img src="static/images/ffcircle_{{rest['details']['food']['ffround']}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <p align="center">{{rest['details']['food']['rank']}} of {{total_evaluated}}</p>
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
-          <h4 align="center"><u>Drinks</u></h4> 
+          <h4 align="center"><u>Drinks = {{rest['details']['drinks']['ffscore']}}</u></h4> 
 	  <img src="static/images/drinks_art.png" class="img-responsive" style="height: 50px; margin-left: 80px"/>
-          <img src="static/images/ffcircle_{{rest['details']['drinks'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+          <img src="static/images/ffcircle_{{rest['details']['drinks']['ffround']}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <p align="center">{{rest['details']['drinks']['rank']}} of {{total_evaluated}}</p>
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
-          <h4 align="center"><u>Service</u></h4>
+          <h4 align="center"><u>Service = {{rest['details']['service']['ffscore']}}</u></h4>
 	  <img src="static/images/service_art.png" style="height: 50px; margin-left: 80px"/>
-          <img src="static/images/ffcircle_{{rest['details']['service'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+          <img src="static/images/ffcircle_{{rest['details']['service']['ffround']}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <p align="center">{{rest['details']['service']['rank']}} of {{total_evaluated}}</p>
         </div>
         <div class="col-xs-6 col-sm-3 placeholder">
-          <h4 align="center"><u>Atmosphere</u></h4>
+          <h4 align="center"><u>Atmosphere = {{rest['details']['atmosphere']['ffscore']}}</u></h4>
 	  <img src="static/images/atmosphere_art.png" style="height: 50px; margin-left: 80px"/>
-          <img src="static/images/ffcircle_{{rest['details']['atmosphere'][5]}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+          <img src="static/images/ffcircle_{{rest['details']['atmosphere']['ffround']}}.png" class="img-responsive" alt="Generic placeholder thumbnail">
+	  <p align="center">{{rest['details']['atmosphere']['rank']}} of {{total_evaluated}}</p>
         </div>
       </div>
 

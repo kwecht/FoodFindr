@@ -34,7 +34,7 @@ def make_score_circles():
     from matplotlib.collections import PatchCollection
 
     # Make 10 images, one for each 10% quantile of restaurants
-    for ii in np.arange(10):
+    for ii in np.arange(11):
 
         # Set up plot
         fig = plt.figure()
@@ -47,15 +47,15 @@ def make_score_circles():
         patches = [circ]
         p = PatchCollection(patches, cmap=matplotlib.cm.RdYlGn, alpha=0.7,lw=8)
         p.set_array(np.array(colors))
-        p.set_clim([0,0.9])
+        p.set_clim([0,1.0])
         ax.add_collection(p)
 
         # Add text to the image
-        if ii < 9:
-            tt = str(ii*10)+'-'+str((ii+1)*10)
-        else:
-            tt = str(ii*10)+'+'
-        plt.text(0,0.05,tt,fontsize=84,ha='center',va='center')
+        #if ii < 9:
+        #    tt = str(ii*10)+'-'+str((ii+1)*10)
+        #else:
+        #    tt = str(ii*10)+'+'
+        #plt.text(0,0.05,tt,fontsize=84,ha='center',va='center')
 
         # Set up axes
         ax.set_ylim([-1.1,1.1])
@@ -68,7 +68,7 @@ def make_score_circles():
         ax.patch.set_visible(False)
         plt.axis('off')
 
-        filename = '../app/static/images/ffcircle_'+str(int(ii))+'.png'
+        filename = '../app/static/images/ffcircle_'+str(float(ii)/2.)+'.png'
         plt.savefig(filename)
 
     return True
