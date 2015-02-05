@@ -5,10 +5,9 @@
 *.rtf
 *.json
 *.csv
+*.ai
 data/
 python/img/
-images/
-*.png
 *.sql
 sql_cfg.py
 run.py

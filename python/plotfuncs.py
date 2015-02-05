@@ -47,7 +47,7 @@ def make_score_circles():
         patches = [circ]
         p = PatchCollection(patches, cmap=matplotlib.cm.RdYlGn, alpha=0.7,lw=8)
         p.set_array(np.array(colors))
-        p.set_clim([0,1.0])
+        p.set_clim([0.25,1.0])
         ax.add_collection(p)
 
         # Add text to the image
