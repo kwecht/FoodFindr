@@ -167,6 +167,8 @@ def query_term(string):
     newdf['rank'] = np.arange(nreturn)+1
     newdf = newdf.reset_index()
 
+    print newdf['ffscore'], newdf['ID'], newdf['name']
+
     # Turn into list of restaurant information dictionaries
     newdf = newdf.T.to_dict().values()
 
