@@ -18,6 +18,10 @@ db = mdb.connect(user="root", host="localhost", db="world_innodb", charset='utf8
 def about_page():
   return render_template("about.html")
 
+@app.route('/slides')
+def slides_page():
+  return render_template("slides.html")
+
 @app.route('/')
 @app.route('/index')
 @app.route('/input')
