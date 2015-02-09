@@ -26,6 +26,8 @@ import pymysql as db
 import numpy as np
 import sql_cfg
 import pandas as pd
+from flask import render_template
+import string
 
 ########################################################################
 
@@ -89,8 +91,9 @@ def FFscore_from_group(group):
 
     # Make 5-element array of votes
     votes = np.zeros(5)
-    for star,nvotes in zip(group['rating'].values,group['nrating'].values):
-        votes[star-1] = nvotes
+    if len(group)!=0:
+        for star,nvotes in zip(group['rating'].values,group['nrating'].values):
+            votes[star-1] = nvotes
 
     #votes[group['rating']-1] = group['nrating']
 
@@ -167,7 +170,6 @@ def query_term(string):
     newdf['rank'] = np.arange(nreturn)+1
     newdf = newdf.reset_index()
 
-    print newdf['ffscore'], newdf['ID'], newdf['name']
 
     # Turn into list of restaurant information dictionaries
     newdf = newdf.T.to_dict().values()
@@ -243,6 +245,10 @@ def query_business(busID,query_term):
         if outlist==[]:
             scores[category.keys()[0]] = {'ffavg': 0.0, 'ffround': 0.0, 'name': u'', 
                                           'yelp': 0.0, 'content': u'', 'ffscore': 0.0}
+            scores[category.keys()[0]]['ffscore'] = FFscore_from_group([])
+            scores[category.keys()[0]]['ffscore'] = np.round(scores[category.keys()[0]]['ffscore'],decimals=2)
+            scores[category.keys()[0]]['ffavg'] = np.round(scores[category.keys()[0]]['ffscore'],decimals=2)
+            scores[category.keys()[0]]['ffround'] = np.round(scores[category.keys()[0]]['ffscore']*2.)/2.0
             continue
 
         df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content'])
@@ -264,62 +270,24 @@ def query_business(busID,query_term):
     return scores
 
 
-
-def find_outlier(query_results,input_term):
+def handle_input(input_term):
     """
-    Return the name and decile (which 10% bin) in which some query results fall
-    for the major hard-coded categories of food, atmosphere, drinks, and service.
+    handle_input prints an error message if the input term is not 
+    a reasonable search request.
+
+    Current flags include:
+       empty term
+       terms with non-alphabetic values (except apostraphe)
+       terms with a "select" and "from" in the search
     """
 
-    # Maintain a list of decimal values corresponding to each bin.
-    # This is not elegant, but it's inefficient to do the same queries each time
-    #     someone uses the site.
-    bins = {'food':[-2.0,0.37867965644,1.25,1.75,2.0,2.29101872004,2.50652466602,
-                    2.75,2.98333705193,3.25, 4.24390350205],
-            'service':[-2.0,-0.62132034356,0.267949192431,1.0,1.29467800954,1.66666666667,
-                       2.0,2.125,2.45131670195,2.7964947398,3.67109874428],
-            'atmosphere':[0 -2.0,0.0,0.171572875254,1.0,1.25,1.87867965644,2.0,
-                          2.26794919243,2.72324943812,3.01410355182, 4.71730635364],
-            'drinks':[-2.0,-0.12132034356,0.983930559977,1.14672783003,1.82273869354, 2.0,
-                      2.30064126288,2.60858846194,2.87961601261,3.26794919243, 4.20804493973]}
+    error_string = ''
+    if input_term=='':
+        error_string = 'INPUT ERROR: please enter a non-blank search term.'
+    if all((l in string.ascii_lowercase+"'") for l in input_term)==False:
+        error_string = 'INPUT ERROR: please remove punctuation and numbers (except apostraphes).'
+    if ('select' in input_term) & ('from' in input_term):
+        error_string = 'INPUT ERROR: Do not enter SQL-like input.'
 
-    # Calculate lower bound of 95% confidence interval from query_results
-    itemrank = {k:0 for k in query_results.keys() if k!=input_term}
-    for item in itemrank:
-        lowerbound = score_lowerbound(query_results[item])
-        print input_term, item, lowerbound
-        thisrank = np.digitize([lowerbound],np.array(bins[item]))-1
-        itemrank[item] = thisrank
-
-
-    # We now have a dictionary of the deciles in which each category falls
-    # Find the highest/lowest one of them
-    output = {'name':'', 'decile':-1}
-    mindec = min(itemrank, key=itemrank.get) # returns key with lowest value
-    maxdec = max(itemrank, key=itemrank.get) # returns key with highest value
-
-    if (itemrank[maxdec] - 5) >= (4 - itemrank[mindec]):
-        output['name'] = maxdec
-        output['decile'] = np.float(itemrank[maxdec])
-    else:
-        output['name'] = mindec
-        output['decile'] = np.float(itemrank[mindec])
-
-
-    return output['name'], int(output['decile'])
-
-
-
-# To get average score of restaurants that contain burrito (using fulltext indices)
-"""
-SELECT bus.business_name, bus.business_stars, AVG(sent.FF_score) as FF_score, AVG(sent.stars) as Star_score, COUNT(sent.FF_score)
-FROM Restaurant_mexican as bus,
-     Review_mexican as rev,
-     sentences_scored as sent
-WHERE bus.business_id=rev.business_id AND
-      rev.review_id=sent.review_id AND
-      sent.content LIKE '%burrito%'
-GROUP BY bus.business_id
-ORDER BY FF_score DESC;
-"""
+    return error_string
 
