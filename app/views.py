@@ -36,9 +36,7 @@ def food_output():
   input_term = request.args.get('ID')
   input_term = input_term.lower()
   err_msg = util.handle_input(input_term)
-  print "err_msg", err_msg
   if err_msg!='':
-    print "error message = ", err_msg
     return render_template('input.html',err_msg=err_msg)
 
   # Query review data for sentence scores on the search term
