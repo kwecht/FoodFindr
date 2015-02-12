@@ -12,8 +12,12 @@ python_util.py
 ########################################################################
 #
 #    python_util.py
-#        - Contains functions for passing and manipulating information
+#        - Contains functions for parsing and manipulating information
 #          passed through the web front-end.
+#
+#    FUNCTIONS
+#        FFscore_from_group - calculates FoodFindr score from a 
+#            pandas dataframe of scored sentences, grouped by restaurant.
 #
 ########################################################################
 """
@@ -32,56 +36,19 @@ import string
 ########################################################################
 
 
-def score_lowerbound(output,ncutoff=20,nsigma=2):
-    """
-    Function for sorting output based on average foodfindr score 
-    and the number of sentences from which the score was derived.
-
-    ncutoff - number of samples necessary for sample standard deviation
-              to be less than 1.
-    nsigma - returned value is the lower end of the nsigma confidence
-             interval. For example, if nsigma = 2, then the lower bound
-             is approximately the edge of the 95% confidence interval.
-
-    Sorting value is the lower bound on 95% confidence interval 
-    of the estimate of the mean, approximated by:
-       SE_mean = sigma / sqrt(n)
-       sigma - standard deviation of sample
-       n - number of samples
-    If n < ncutoff and sigma < 1, set sigma=1. This is to prevent 
-       the high ranking of a restaurant with a very low sigma
-       that is caused by a small number of reviews.
-
-    Returns sorted list output.
-    """
-
-    # Parameters to control
-    minstd = 1.5
-    nsigma = 2
-
-
-    # Replace standard deviations that are too small with a minimum value
-    if output[4] < ncutoff:
-        output[3] = np.max([minstd,output[3]])
-
-    # Calculate lower bound of 95% confidence interval
-    try:
-        SE = output[3] / np.sqrt(output[4])
-        lowerbound = output[2] - nsigma*SE
-    except:
-        lowerbound = 0.  # because output[4] might be None
-
-
-    return lowerbound
-
-
-
 def FFscore_from_group(group):
     """
-    Returns bayes dirichlet score as the function above
-    but implemented from a pandas grouped dataframe.
+    Returns bayesian estimate of rating as the FoodFindr score from a 
+    pandas dataframe of scored sentences, grouped by restaurant.
+
+    Assumes a Dirichlet prior whose distribution is taken from
+    all FoodFindr scored sentences in the database. The strength
+    of the prior is set in the first line of the function. For more
+    info: http://masanjin.net/blog/how-to-rank-products-based-on-user-input
     """
 
+    # prior distribution manually entered from the distribution
+    #    of scores across all sentences
     prior_strength = 10.
     prior = np.array([16711,10247,17443,51856,50386])
     prior = prior_strength*prior/prior.sum()
@@ -95,8 +62,6 @@ def FFscore_from_group(group):
         for star,nvotes in zip(group['rating'].values,group['nrating'].values):
             votes[star-1] = nvotes
 
-    #votes[group['rating']-1] = group['nrating']
-
     # Calculate final score as weighted average of votes,
     #    regularized by the prior
     posterior = prior + votes
@@ -106,16 +71,16 @@ def FFscore_from_group(group):
     return final_score
 
 
-def rawavg(group):
+def rawavg_from_group(group):
     """
-    Calculates raw average of ratings.
+    Calculates raw average of ratings (without Bayesian Dirichlet prior)
+    from a grouped pandas dataframe as grouped in query_term
     """
 
     value = np.arange(1,6)
     votes = np.zeros(5)
     for star,nvotes in zip(group['rating'].values,group['nrating'].values):
         votes[star-1] = nvotes
-    #votes[group['rating']-1] = group['nrating']
 
     return (value*votes).sum() / votes.sum()
 
@@ -124,10 +89,10 @@ def query_term(string):
     """
     Queries text of review database for a given string.
 
-    Returns the number of reviews for each restaurant that contain the string.
+    Returns a list of dictionaries containing information about
+    each restaurant.
 
-    Returns list of tuples that are:
-    (business_id, n_reviews)
+    Query_term and query_business 
     """
 
     # Start engine to connect to mysql
@@ -152,33 +117,31 @@ def query_term(string):
 
     cur.execute(cmd)
     output = cur.fetchall()
+    cur.close()
+    con.close()
 
     # Calculate FoodFindr score and raw (unregularized) average for each restaurant
     outlist = [v for v in output if v[2]!=0]
     df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content','city'])
     grouped = df.groupby('ID')
     ffscore = grouped.apply(FFscore_from_group)
-    ffavg = grouped.apply(rawavg)
+    ffavg = grouped.apply(rawavg_from_group)
     newdf = grouped['yelp','content','name','city'].last()
     newdf['ffscore'] = np.round(ffscore.values,decimals=2)
     newdf['ffavg'] = np.round(ffavg.values,decimals=2)
     newdf['ffround'] = np.round(newdf['ffscore']*2.)/2.0
 
-    # Limit results to top 5 FoodFindr scores
+    # Limit results to topN FoodFindr scores
     nreturn = 10
     newdf = newdf.sort('ffscore',ascending=False).iloc[0:nreturn,:]
     newdf['rank'] = np.arange(nreturn)+1
     newdf = newdf.reset_index()
 
-
     # Turn into list of restaurant information dictionaries
-    newdf = newdf.T.to_dict().values()
+    outdicts = newdf.T.to_dict().values()
 
-    cur.close()
-    con.close()
-
-    # Return business name, business id, FFscore, RawAverage, example sentence
-    return newdf
+    # Return list of 
+    return outdicts
 
 
 
@@ -186,9 +149,15 @@ def query_business(busID,query_term):
     """
     Queries text of reviews for a given business ID.
 
-    Returns popular terms and associated scores in a dictionary.
+    Returns list of dictionaries with score information 
+    for popular terms (food, service, atmosphere, drinks)
+    hard-coded in the first line of the function.
 
-    Always returns a single row.
+    query_business and query_term share many similar 
+    components. They should either be combined into a single
+    function or their shared components should be combined
+    into single functions. This is work to be done in the
+    future when cleaning up the code. (kjw, 2/11/15)
     """
 
     # List of popular terms to query. Make this a function in the future.
@@ -254,7 +223,7 @@ def query_business(busID,query_term):
         df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content'])
         grouped = df.groupby('ID')
         ffscore = grouped.apply(FFscore_from_group)
-        ffavg = grouped.apply(rawavg)
+        ffavg = grouped.apply(rawavg_from_group)
         newdf = grouped['yelp','content','name'].last()
         newdf['ffscore'] = np.round(ffscore,decimals=2)
         newdf['ffavg'] = np.round(ffavg,decimals=2)
