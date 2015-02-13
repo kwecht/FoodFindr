@@ -253,8 +253,8 @@ def handle_input(input_term):
     error_string = ''
     if input_term=='':
         error_string = 'INPUT ERROR: please enter a non-blank search term.'
-    if all((l in string.ascii_lowercase+"'") for l in input_term)==False:
-        error_string = 'INPUT ERROR: please remove punctuation and numbers (except apostraphes).'
+    if all((l in string.ascii_lowercase+"'"+" ") for l in input_term)==False:
+        error_string = 'INPUT ERROR: please remove punctuation and numbers. Remove extra spaces. Apostrophes OK.'
     if ((('select' in input_term) & ('from' in input_term)) | 
        (('drop' in input_term) & ('table' in input_term))):
         error_string = 'INPUT ERROR: Do not enter SQL-like input.'
