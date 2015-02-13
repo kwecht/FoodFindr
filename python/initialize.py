@@ -18,6 +18,14 @@ initialize.py
 #        - Saves tokenized, segmented text to a pandas dataframe to build 
 #              traning labels.
 #
+#    FUNCTIONS
+#        main     - primary function in this file. main reads yelp
+#                   data from json and creates tables in a mysql database
+#                   of business, review, and sentence information.
+#        other functions called by main. These are involved in cleaning 
+#        data, pickling pandas dataframes, and generating a mysql database.
+#        Enumerate the functions and their purposes here.
+#
 #    EXAMPLE
 #        $ python initialize.py
 #
@@ -101,7 +109,12 @@ def save2pickle(restaurant_data,review_data,append_string=''):
 
 
 def py2mysql(restaurant_data,review_data,append_string=''):
-    """Saves restaurant and review data to MySQL database."""
+    """
+    Saves restaurant and review data to MySQL database.
+    Adapted from function written by Mei.
+
+    Clean and modularize when I have time.
+    """
 
     import pymysql as mdb
 
@@ -231,6 +244,10 @@ def py2mysql(restaurant_data,review_data,append_string=''):
 def sentence2mysql(sentences,append_string=''):
     """
     create sentence database in mysql database for yelp_sentiment_db
+    Adapted from py2mysql function defined above.
+
+    Clean and modularize when I have time. This shares many operations
+    with py2msql above.
     """
 
     cur = con.cursor()
@@ -289,16 +306,6 @@ def build_lemma_vocab(append_string=''):
     return True
 
 
-def count_lemmas(text,append_string=''):
-    """
-    Count number of occurances of each lemma in the text.
-
-    returns pandas Series where index=lemma, value=count
-    """
-
-    return None
-
-
 def add_lemmas2pandas(type_string='', append_string=''):
     """
     Adds lemmatized text as an extra column in the reviews and/or sentences
@@ -337,18 +344,6 @@ def add_lemmas2pandas(type_string='', append_string=''):
     dataframe.to_pickle('../data/pandas/'+type_string+'_lemmas'+append_string+'.pkl')
 
     return True
-
-
-def addbusiness2sentences():
-    """
-    Add business ID values to each row of the sentences dataframes.
-    """
-
-    # File names of sentence dataframes to which I will add business IDs
-    files = ['','','','']
-
-    return True
-    
 
 
 

@@ -18,7 +18,8 @@ sentiment.py
 #              called during initialize.py.
 #	 - Querying of database and insertion of columns for sentiment scoring.
 #
-#    EXAMPLE
+#    There is some overlap between sentences2sql here and the sql functions
+#        in initialize.py. Move relevant functions to one of the two files.
 #        
 #
 ########################################################################
@@ -33,58 +34,6 @@ import pandas as pd
 import pymysql as db
 
 ########################################################################
-
-def score_lowerbound(output,ncutoff=20,nsigma=2,calling=''):
-    """
-    Function for sorting output based on average foodfindr score 
-    and the number of sentences from which the score was derived.
-
-    ncutoff - number of samples necessary for sample standard deviation
-              to be less than 1.
-    nsigma - returned value is the lower end of the nsigma confidence
-             interval. For example, if nsigma = 2, then the lower bound
-             is approximately the edge of the 95% confidence interval.
-    calling - name of function calling order_output. This is necessary 
-              to know the format of sql results passed to order_output.
-
-    Sorting value is the lower bound on 95% confidence interval 
-    of the estimate of the mean, approximated by:
-       SE_mean = sigma / sqrt(n)
-       sigma - standard deviation of sample
-       n - number of samples
-    If n < ncutoff and sigma < 1, set sigma=1. This is to prevent 
-       the high ranking of a restaurant with a very low sigma
-       that is caused by a small number of reviews.
-
-    Returns sorted list output.
-    """
-
-    # Parameters to control
-    minstd = 1.5
-    nsigma = 2
-
-
-    # Replace standard deviations that are too small with a minimum value
-    #if calling=='query_term':
-    if output[4] < ncutoff:
-        output[3] = np.max([minstd,output[3]])
-
-    #elif calling=='find_outlier':
-    #    if output[4] < ncutoff:
-    #        output[3] = np.max([minstd,output[3]])
-    
-                
-    # Calculate lower bound of 95% confidence interval
-    try:
-        SE = output[3] / np.sqrt(output[4])
-        lowerbound = output[2] - nsigma*SE
-    except:
-        lowerbound = 0.  # because output[4] might be None
-
-
-    return lowerbound
-
-
 
 def query_term(string):
     """

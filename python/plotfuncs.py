@@ -1,5 +1,37 @@
+#!/usr/bin/env python
+
+"""
+plotfuncs.py
+########################################################################
+#
+#        Kevin Wecht                21 January 2015
+#
+#    Insight Data Science Project:
+#        Food Finder
+#
+########################################################################
+#
+#    plotfuncs.py
+#        - Contains functions for making common plots
+#
+#    FUNCTIONS
+#        plot_class_results - plots 2D confusion matrix colored by 
+#            fraction predicted in each box.
+#        make_score_circles - plots and saves colored circles from
+#            red to green, corresponding to FoodFindr scores from 1-5.
+#
+########################################################################
+"""
+
+__author__      = "Kevin Wecht"
+
+########################################################################
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+########################################################################
+
 
 def plot_class_results(frac2d):
     """
@@ -49,13 +81,6 @@ def make_score_circles():
         p.set_array(np.array(colors))
         p.set_clim([0.25,1.0])
         ax.add_collection(p)
-
-        # Add text to the image
-        #if ii < 9:
-        #    tt = str(ii*10)+'-'+str((ii+1)*10)
-        #else:
-        #    tt = str(ii*10)+'+'
-        #plt.text(0,0.05,tt,fontsize=84,ha='center',va='center')
 
         # Set up axes
         ax.set_ylim([-1.1,1.1])

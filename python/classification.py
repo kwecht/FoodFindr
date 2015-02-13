@@ -92,7 +92,8 @@ def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
 
     if interrogate==True: original_lemmaCount = lemmaCount
 
-    # 1) Trim by threshold
+    # 1) Trim by threshold. The lemma used must occure at least 
+    #      N times in the corpus.
     N = 8
     lemmaCount = lemmaCount.loc[:,lemmaCount.max()>N]
     if interrogate==True: trimmed_lemmaCount = lemmaCount
@@ -114,9 +115,6 @@ def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
     # Trim lemmaCount dataframe for those lemmaCount
     keeplemmas = list(set(keeplemmas))
     lemmaCount = lemmaCount.loc[:,keeplemmas]
-    #lemmaCount.drop_duplicates(inplace=True)
-
-
 
     # Investigate properties of the words that I pull out to use
     #     as representative of the vocabulary.
@@ -126,16 +124,12 @@ def build_lemma_list(lemmaCount,Nunique=200,interrogate=False):
                                    full_lemmalist,original_lemmaCount,
                                    trimmed_lemmaCount,append_string='_mexican')
 
-
     # Save list of lemmas to use for training
     with open('../data/pandas/lemma_list_'+str(Nunique)+'.txt', 'w') as f:
         for s in keeplemmas:
             f.write(s.encode('unicode-escape'))
             f.write('\n')
 
-    # Read list from file
-    #with open(the_filename, 'r') as f:
-    #    my_list = [line.decode('unicode-escape').rstrip(u'\n') for line in f]
 
     return True
 

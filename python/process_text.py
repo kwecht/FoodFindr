@@ -12,11 +12,15 @@ process_text.py
 ########################################################################
 #
 #    process_text.py
-#        - processes text for many applications
-#        - splits individual reviews into sentences
+#        contains functions to process text. for example, splitting
+#        reviews into sentences, lemmatizing, tagging parts of speech,
+#        negation handling, adding N-grams, ...
 #
-#    EXAMPLE
-#        $ python initialize.py
+#    FUNCTIONS
+#        text2lemmas - primary function in process_text.py. text2lemmas
+#            transforms a string of text into the lemmas that can then
+#            be used to build features for a classifier.
+#
 #
 ########################################################################
 """
@@ -32,30 +36,6 @@ import nltk
 import external.potts_tokenizer as ptk
 
 ########################################################################
-
-
-#def add_training_label(sentences,review_data):
-#    """
-#    Adds column to pandas dataframe of sentences that holds hand-labeled 
-#    values for classification (sentiment from 1-5 stars).
-#
-#    sentences  - pandas dataframe returned by reviews_to_sentences
-#
-#    returns same pandas dataframe with an extra column. All values of 
-#        the new column are np.nan (NULL) except those selected
-#        for hand labeling, which contain 0.
-#    """
-#
-#    sentences['hand_label'] = np.nan
-#
-#    # select restaurants to be included in the training set
-#    random.seed(1234)
-#    busids = random.sample(review_data.business_id,20)
-#    revids = review_data['review_id'][review_data.business_id.isin(busids)]
-#    sentences['hand_label'][sentences.review_id.isin(revids)] = 0
-#
-#    return sentences
-
 
 
 def reviews_to_sentences(append_string=''):
@@ -301,75 +281,3 @@ def text2lemmas(string):
     lemmas, pos = remove_pos(lemmas,pos,keep=[wn.NOUN,wn.VERB,wn.ADJ,wn.ADV,'2gram','3gram'])
 
     return lemmas
-
-
-
-
-
-
-
-#def word_count(lemmas,append_string=''):
-#    """
-#    Count frequency of words in a list of lemmas.
-#    """
-#    import sentiment
-#
-#    sentences = pd.read_pickle('../data/pandas/sentences'+append_string+'.pkl')
-#
-#    bags = []
-#    for nstar in sentences.stars.unique():
-#        print "processing stars = {}".format(nstar)
-#        thisdata = sentences[sentences['stars']==nstar]
-#        thisbag = sentiment.get_bag(thisdata)  # only keeps nouns, adjectives, verbs
-#        thisbag.name = str(int(nstar))
-#        bags.append( thisbag )
-#    
-#    dataframe = pd.concat(bags,axis=1)
-#    dataframe.to_pickle('../data/pandas/word_count'+append_string+'.pkl')
-#
-#    return True
-#
-#
-#def trim_word_count(words,how='',freq_threshold=0.0002,N=None):
-#    """
-#    Trims the bag of words prodoced by word_count().
-#    Used to select meaningful words that will be passed to 
-#    a classifier to determine how many stars a given 
-#    piece of text should have (entire review or single sentence).
-#
-#    words  - a pandas dataframe produced by word_count()
-#    how    - string indicating the way in which to trim the words
-#             {'unique'|'frequency'}
-#             unique    - keep the N most unique words in each category
-#                         where unique is defined as the ratio of
-#                         frequency-in-category : frequency-out-of-category
-#             frequency - keep all words that occur in the corpus with
-#                         frequency >= freq_threshold.
-#    N      - if how='unique': keep N most unique words in each category
-#    freq_threshold - keep all words that occur in the corpus
-#                     with frequency >= freq_threshold
-#    """
-#
-#    # Only keep words that occur above a threshold frequency
-#    total = words.sum(1)
-#    overallfreq = total / total.sum()
-#    words = words[overallfreq>freq_threshold]
-#
-#    # Only keep words that are unique to a given category
-#    if how=='unique':
-#        
-#        # Find all words that are unique to each category
-#        keepwords = []
-#        for col in words:
-#            relfreq = words[col].div(words.sum(1),axis='index')
-#            relfreq.order(ascending=False,inplace=True)
-#            keepwords.extend(relfreq.index[0:N])
-#
-#        # Trim words dataframe for those words
-#        if len(set(keepwords))==len(keepwords):
-#            print "Warning in process_text.trim_word_count"
-#            print "   Some words are important for more than one category."
-#        words = words.loc[keepwords]
-#        words.drop_duplicates(inplace=True)
-#
-#    return words
