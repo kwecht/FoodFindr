@@ -120,8 +120,11 @@ def query_term(string):
     cur.close()
     con.close()
 
-    # Calculate FoodFindr score and raw (unregularized) average for each restaurant
+    # Return empty list if no restaurants found
     outlist = [v for v in output if v[2]!=0]
+    if outlist==[]: return outlist
+
+    # Calculate FoodFindr score and raw (unregularized) average for each restaurant
     df = pd.DataFrame(outlist,columns=['name','yelp','nrating','rating','ID','content','city'])
     grouped = df.groupby('ID')
     ffscore = grouped.apply(FFscore_from_group)
@@ -253,7 +256,7 @@ def handle_input(input_term):
     error_string = ''
     if input_term=='':
         error_string = 'INPUT ERROR: please enter a non-blank search term.'
-    if all((l in string.ascii_lowercase+"'"+" ") for l in input_term)==False:
+    if all((l in string.ascii_lowercase+"'"+string.whitespace) for l in input_term)==False:
         error_string = 'INPUT ERROR: please remove punctuation and numbers. Remove extra spaces. Apostrophes OK.'
     if ((('select' in input_term) & ('from' in input_term)) | 
        (('drop' in input_term) & ('table' in input_term))):
